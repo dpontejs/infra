@@ -25,7 +25,7 @@ stack behind **Caddy** (automatic HTTPS), deployed by **GitHub Actions**, with b
   │   ├─ diegoponte.dev          → portfolio         └─ GPU inference / local LLMs
   │   ├─ rag.diegoponte.dev      → RAG demo API
   │   ├─ mlflow.diegoponte.dev   → MLflow (auth)
-  │   ├─ flamengo.diegoponte.dev → Flamengo News sign-up
+  │   ├─ urubunews.diegoponte.dev → Urubu News sign-up
   │   └─ status.diegoponte.dev   → Uptime Kuma
   ├─ Postgres + pgvector (shared)
   └─ scheduled jobs (flamengo-news, planning-ai)

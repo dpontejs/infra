@@ -40,7 +40,7 @@ run "apex_and_subdomains_point_to_the_server" {
   assert {
     condition = toset([for r in cloudflare_dns_record.ipv4 : r.name]) == toset([
       "diegoponte.dev", "www.diegoponte.dev", "status.diegoponte.dev",
-      "rag.diegoponte.dev", "mlflow.diegoponte.dev",
+      "rag.diegoponte.dev", "mlflow.diegoponte.dev", "flamengo.diegoponte.dev",
     ])
     error_message = "A records must cover the apex and every subdomain"
   }

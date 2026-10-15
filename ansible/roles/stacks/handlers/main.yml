@@ -12,3 +12,9 @@
     project_src: "{{ stacks_dir }}/caddy"
     state: present
     recreate: always
+
+- name: Restart flamengo-news
+  community.docker.docker_compose_v2:
+    project_src: "{{ stacks_dir }}/flamengo-news"
+    state: present
+    recreate: always

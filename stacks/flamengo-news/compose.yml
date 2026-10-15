@@ -1,0 +1,23 @@
+services:
+  flamengo-news:
+    # Subscription page of the Flamengo News newsletter, built and pushed by the flamengo-news
+    # repo's CI. The stack-update agent follows this moving tag; the healthcheck comes from the image.
+    image: ghcr.io/dpontejs/flamengo-news:main
+    restart: unless-stopped
+    # Secrets (SUBSCRIBE_SECRET, SUBSCRIBERS_API_TOKEN, RESEND_API_KEY...) written by Ansible.
+    # Optional only so `make stacks-test` validates offline; without it the app refuses to start.
+    env_file:
+      - path: .env
+        required: false
+    volumes:
+      - flamengo_news_data:/data
+    networks:
+      - web
+
+volumes:
+  # SQLite with the subscribers: survives new images and container recreation.
+  flamengo_news_data:
+
+networks:
+  web:
+    external: true

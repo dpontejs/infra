@@ -22,10 +22,11 @@ stack behind **Caddy** (automatic HTTPS), deployed by **GitHub Actions**, with b
         ▼                                                ▼
   Hetzner VPS (CX23)                             Home PC (RTX 4050)
   ├─ Caddy (HTTPS, reverse proxy)                └─ cloudflared tunnel
-  │   ├─ diegoponte.dev        → portfolio           └─ GPU inference / local LLMs
-  │   ├─ rag.diegoponte.dev    → RAG demo API
-  │   ├─ mlflow.diegoponte.dev → MLflow (auth)
-  │   └─ status.diegoponte.dev → Uptime Kuma
+  │   ├─ diegoponte.dev          → portfolio         └─ GPU inference / local LLMs
+  │   ├─ rag.diegoponte.dev      → RAG demo API
+  │   ├─ mlflow.diegoponte.dev   → MLflow (auth)
+  │   ├─ flamengo.diegoponte.dev → Flamengo News sign-up
+  │   └─ status.diegoponte.dev   → Uptime Kuma
   ├─ Postgres + pgvector (shared)
   └─ scheduled jobs (flamengo-news, planning-ai)
 ```
@@ -61,6 +62,10 @@ Requirements: Terraform ≥ 1.9, Ansible (`ansible-core` + `ansible-lint`), a He
 #   CLOUDFLARE_API_TOKEN: Zone:Read + DNS:Edit on the domain's zone only
 echo 'export HCLOUD_TOKEN=...' > ~/.config/infra/secrets.env
 echo 'export CLOUDFLARE_API_TOKEN=...' >> ~/.config/infra/secrets.env
+#   Flamengo News sign-up page (stacks/flamengo-news)
+echo "export FLAMENGO_NEWS_SUBSCRIBE_SECRET=$(openssl rand -hex 32)" >> ~/.config/infra/secrets.env
+echo "export FLAMENGO_NEWS_API_TOKEN=$(openssl rand -hex 32)" >> ~/.config/infra/secrets.env
+echo 'export FLAMENGO_NEWS_RESEND_API_KEY=...' >> ~/.config/infra/secrets.env
 
 cp terraform/example.tfvars terraform/terraform.tfvars   # set admin_cidrs to your IP
 make init

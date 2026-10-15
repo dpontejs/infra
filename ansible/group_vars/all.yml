@@ -21,7 +21,7 @@ stacks_enabled: [caddy, uptime-kuma, portfolio, flamengo-news]
 # Stacks deployed automatically when a new image is pushed (docs/features/auto-deploy.md).
 auto_update_stacks: [portfolio, flamengo-news]
 # admin_cidrs comes from Terraform (terraform.tfvars) through the generated inventory.
-# Flamengo News sign-up page. Secrets come from the admin machine's environment
+# Urubu News (Flamengo newsletter) sign-up page. Secrets come from the admin machine's environment
 # (~/.config/infra/secrets.env, sourced by `make configure`), never from the repo.
 flamengo_news_public_url: "https://flamengo.{{ domain }}"
-flamengo_news_sender: "Flamengo News <news@{{ domain }}>"
+flamengo_news_sender: "Urubu News <news@{{ domain }}>"

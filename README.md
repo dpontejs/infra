@@ -40,6 +40,12 @@ Each item is a vertical slice tracked as a GitHub issue.
 - [ ] **Shared database and backups** — Postgres + pgvector, scheduled backups to object storage, tested restore.
 - [ ] **Cloudflare Tunnel to the home GPU** — expose GPU services from the home PC securely.
 
+## Learning guide
+
+Each step is documented as a didactic guide: concepts, walkthrough of the code, decisions, exercises and pitfalls.
+
+1. [Provisioning a server with Terraform](docs/guide/01-provisioning-with-terraform.md)
+
 ## Usage
 
 Requirements: Terraform ≥ 1.9, a Hetzner Cloud project and an SSH key.

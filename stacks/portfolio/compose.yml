@@ -1,0 +1,12 @@
+services:
+  portfolio:
+    # Built and pushed by the portfolio repo's CI. The stack-update agent follows this moving tag;
+    # the healthcheck comes from the image (Dockerfile HEALTHCHECK).
+    image: ghcr.io/dpontejs/portfolio:main
+    restart: unless-stopped
+    networks:
+      - web
+
+networks:
+  web:
+    external: true

@@ -12,12 +12,10 @@
 	}
 }
 
-# Portfolio: static files. A placeholder until the portfolio repo deploys the real site.
+# Portfolio: its own container (stacks/portfolio), which already compresses and sets cache headers.
 {$DOMAIN} {
 	import security_headers
-	encode zstd gzip
-	root * /srv/portfolio
-	file_server
+	reverse_proxy portfolio:80
 }
 
 www.{$DOMAIN} {

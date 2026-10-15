@@ -1,4 +1,4 @@
-.PHONY: test lint dev init plan apply ansible-deps inventory bootstrap configure check stacks-test smoke
+.PHONY: test lint dev init plan apply ansible-deps inventory bootstrap configure check stacks-test smoke test-integration
 
 TF := terraform -chdir=terraform
 SECRETS := $(HOME)/.config/infra/secrets.env
@@ -15,6 +15,7 @@ test: ansible-deps
 	$(TF) test
 	$(ANSIBLE) ansible-playbook -i localhost, --syntax-check playbook.yml
 	@$(MAKE) -s stacks-test
+	python3 -m unittest discover -s agent
 
 lint: ansible-deps
 	$(TF) fmt -check -recursive
@@ -60,6 +61,10 @@ stacks-test:
 		-v "$(CURDIR)/stacks/caddy/conf:/etc/caddy:ro" $(CADDY_IMAGE) \
 		caddy validate --config /etc/caddy/Caddyfile 2>&1 | tail -1
 	@echo "stacks ok"
+
+# Deploy agent against a real Docker daemon and a local registry (~1 min).
+test-integration:
+	python3 -m unittest discover -s agent -p "integration_*.py"
 
 # Checks the live sites over the internet after a deploy.
 smoke:

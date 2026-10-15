@@ -10,6 +10,7 @@
     - swap
     - docker
     - stacks
+    - deploy_agent
     # Last on purpose: root SSH login is disabled only after everything else ran,
     # and the restart happens in a handler at the very end of the play.
     - ssh

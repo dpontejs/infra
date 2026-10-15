@@ -1,11 +1,25 @@
-.PHONY: test lint dev
+.PHONY: test lint dev init plan apply
 
-# Placeholder until the first slice adds real checks (see the roadmap in README.md).
+TF := terraform -chdir=terraform
+SECRETS := $(HOME)/.config/infra/secrets.env
+
+init:
+	$(TF) init -input=false
+
 test:
-	@echo "no tests yet"
+	@$(TF) init -input=false -backend=false >/dev/null
+	$(TF) test
 
 lint:
-	@echo "no linters yet"
+	$(TF) fmt -check -recursive
+	@$(TF) init -input=false -backend=false >/dev/null
+	$(TF) validate
+
+plan:
+	. $(SECRETS) && $(TF) plan -input=false -out=tfplan
+
+apply:
+	. $(SECRETS) && $(TF) apply -input=false tfplan
 
 dev:
 	@echo "Not implemented yet: see the roadmap in README.md"

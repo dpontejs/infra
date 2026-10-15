@@ -1,0 +1,14 @@
+---
+# Config changes: graceful reload, no downtime and no dropped connections.
+- name: Reload caddy
+  ansible.builtin.command: docker compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile
+  args:
+    chdir: "{{ stacks_dir }}/caddy"
+  changed_when: true
+
+# Environment changes only apply to a recreated container.
+- name: Restart caddy
+  community.docker.docker_compose_v2:
+    project_src: "{{ stacks_dir }}/caddy"
+    state: present
+    recreate: always

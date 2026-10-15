@@ -1,0 +1,16 @@
+services:
+  uptime-kuma:
+    image: louislam/uptime-kuma:2.5.6
+    restart: unless-stopped
+    volumes:
+      - uptime_kuma_data:/app/data
+    # No published ports: only reachable through Caddy on the shared "web" network.
+    networks:
+      - web
+
+volumes:
+  uptime_kuma_data:
+
+networks:
+  web:
+    external: true

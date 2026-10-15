@@ -1,0 +1,35 @@
+# Caddy obtains and renews HTTPS certificates (Let's Encrypt) for every site below on its own.
+# {$VAR} placeholders come from the container environment (written by Ansible to .env):
+#   DOMAIN       e.g. diegoponte.dev
+#   ADMIN_CIDRS  space-separated CIDRs allowed into admin panels
+
+(security_headers) {
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+}
+
+# Portfolio: static files. A placeholder until the portfolio repo deploys the real site.
+{$DOMAIN} {
+	import security_headers
+	encode zstd gzip
+	root * /srv/portfolio
+	file_server
+}
+
+www.{$DOMAIN} {
+	redir https://{$DOMAIN}{uri} permanent
+}
+
+# Uptime Kuma: admin panel, only reachable from ADMIN_CIDRS.
+status.{$DOMAIN} {
+	import security_headers
+	# Access log (JSON to stdout, rotated by Docker): who reached the admin panel, from which IP.
+	log
+	@outsiders not remote_ip {$ADMIN_CIDRS}
+	respond @outsiders "Forbidden" 403
+	reverse_proxy uptime-kuma:3001
+}

@@ -10,3 +10,12 @@ firewall_allowed_tcp_ports: [22, 80, 443]
 
 swap_size_mb: 2048
 swap_swappiness: 10
+
+domain: diegoponte.dev
+stacks_dir: /opt/stacks
+# Shared Docker network "web". The IPv6 subnet is a private ULA range (fd00::/8), like 10.0.0.0/8 for IPv4.
+docker_web_subnet_ipv4: 172.18.0.0/16
+docker_web_subnet_ipv6: fd4d:6f6e:6974::/64
+# Started in this order; caddy first so the others are reachable as soon as they start.
+stacks_enabled: [caddy, uptime-kuma]
+# admin_cidrs comes from Terraform (terraform.tfvars) through the generated inventory.

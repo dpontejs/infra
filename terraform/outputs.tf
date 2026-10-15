@@ -17,3 +17,8 @@ output "hostnames" {
   description = "Hostnames pointing to the server."
   value       = sort([for r in cloudflare_dns_record.ipv4 : r.name])
 }
+
+output "admin_cidrs" {
+  description = "CIDRs allowed into SSH and admin panels (used by Ansible through the generated inventory)."
+  value       = var.admin_cidrs
+}

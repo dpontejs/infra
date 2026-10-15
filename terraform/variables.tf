@@ -42,3 +42,20 @@ variable "image" {
   type        = string
   default     = "ubuntu-24.04"
 }
+
+variable "domain" {
+  description = "Domain managed in Cloudflare."
+  type        = string
+  default     = "diegoponte.dev"
+}
+
+variable "subdomains" {
+  description = "Subdomains that point to the server, besides the apex (the domain itself)."
+  type        = list(string)
+  default     = ["www", "status", "rag", "mlflow"]
+
+  validation {
+    condition     = alltrue([for s in var.subdomains : can(regex("^[a-z0-9]([a-z0-9-]*[a-z0-9])?$", s))])
+    error_message = "Subdomains must be lowercase DNS labels (letters, digits and hyphens)."
+  }
+}

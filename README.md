@@ -45,14 +45,18 @@ Each item is a vertical slice tracked as a GitHub issue.
 Each step is documented as a didactic guide: concepts, walkthrough of the code, decisions, exercises and pitfalls.
 
 1. [Provisioning a server with Terraform](docs/guide/01-provisioning-with-terraform.md)
+2. [Pointing a domain to the server with Cloudflare DNS](docs/guide/02-dns-with-cloudflare.md)
 
 ## Usage
 
-Requirements: Terraform ≥ 1.9, a Hetzner Cloud project and an SSH key.
+Requirements: Terraform ≥ 1.9, a Hetzner Cloud project, a domain on Cloudflare and an SSH key.
 
 ```bash
-# Hetzner API token, kept outside the repo (chmod 600)
+# API tokens, kept outside the repo (chmod 600)
+#   HCLOUD_TOKEN: Hetzner project token (Read & Write)
+#   CLOUDFLARE_API_TOKEN: Zone:Read + DNS:Edit on the domain's zone only
 echo 'export HCLOUD_TOKEN=...' > ~/.config/infra/secrets.env
+echo 'export CLOUDFLARE_API_TOKEN=...' >> ~/.config/infra/secrets.env
 
 cp terraform/example.tfvars terraform/terraform.tfvars   # set admin_cidrs to your IP
 make init

@@ -132,12 +132,33 @@ generated inventory → Caddy. Changing your IP in one place updates both the SS
 The `403` for outsiders was verified by calling `status.diegoponte.dev` from the server itself (its IP is
 not in `admin_cidrs`).
 
-## 5. A bug found while doing this
+## 5. Bugs found while doing this
 
 The first deploy failed: `'NoneType' object is not iterable` while writing `caddy/.env`. The new Terraform
 output `admin_cidrs` existed in the **code** but not yet in the **state** — outputs are only recorded on
 `apply` — so the inventory got an empty value. Fixes: apply the output, and an `assert` at the top of the
 role that fails with a clear message ("run `make plan && make apply`") instead of a cryptic error.
+
+### …and a second one, only visible from a real browser
+
+After the fix above, `make smoke` passed — but the browser still got **403**. The difference: Windows
+connects over **IPv6** (the domain has AAAA records), while WSL only has IPv4.
+
+Two problems stacked up:
+
+1. `admin_cidrs` only had the IPv4 address. Fix: also allow the home IPv6 **/64** (the last 64 bits of a
+   Windows IPv6 address rotate for privacy; the first 64 identify the network).
+2. Even then, still 403. The Docker network `web` was **IPv4-only**, so Docker accepted IPv6 connections in
+   a userland proxy (`docker-proxy -host-ip ::`) and forwarded them to Caddy over IPv4 — Caddy saw
+   Docker's gateway `172.18.0.1` as `remote_ip`, never the visitor. Fix: create the network with
+   `enable_ipv6: true` and a private IPv6 subnet (ULA, `fd4d:6f6e:6974::/64`); Docker then forwards IPv6
+   natively with ip6tables and the source address is preserved.
+
+How it was confirmed: the `status` site now has an access `log`, and a request over IPv6 shows the real
+address (`"remote_ip":"2a01:…"`) instead of `172.18.0.1`.
+
+Lesson: test from the client people will actually use. A check that only runs from one network
+(here, IPv4-only WSL) can be green while real users fail.
 
 ## 6. Exercises
 
@@ -158,7 +179,8 @@ role that fails with a clear message ("run `make plan && make apply`") instead o
 - **Your IP changed** → `status` returns 403 (and SSH times out). Update `admin_cidrs`, then
   `make plan && make apply && make configure`.
 - **IPv6 at home:** if your browser connects over IPv6, your IPv4 in `admin_cidrs` won't match. Add your
-  IPv6 prefix too (`curl -6 https://ifconfig.me`).
+  IPv6 /64 too (open https://ifconfig.me in the browser to see it). And any Docker network that receives
+  public traffic needs IPv6 enabled, or visitor IPs are replaced by Docker's gateway (section 5).
 - **Proxying (orange cloud) later:** with Cloudflare's proxy on, Caddy sees Cloudflare's IPs as
   `remote_ip`, which breaks the allowlist; you'd need `trusted_proxies` and `client_ip`.
 

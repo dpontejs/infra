@@ -9,9 +9,16 @@
     name: python3-docker
     state: present
 
+# IPv6 must be enabled on the network: otherwise Docker accepts IPv6 connections in a userland
+# proxy and forwards them over IPv4, and Caddy sees Docker's gateway (172.18.0.1) instead of the
+# visitor's IP, which breaks the admin allowlist (remote_ip).
 - name: Create shared network for services behind Caddy
   community.docker.docker_network:
     name: web
+    enable_ipv6: true
+    ipam_config:
+      - subnet: "{{ docker_web_subnet_ipv4 }}"
+      - subnet: "{{ docker_web_subnet_ipv6 }}"
 
 - name: Copy stacks to the server
   ansible.builtin.copy:

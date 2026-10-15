@@ -27,6 +27,8 @@ www.{$DOMAIN} {
 # Uptime Kuma: admin panel, only reachable from ADMIN_CIDRS.
 status.{$DOMAIN} {
 	import security_headers
+	# Access log (JSON to stdout, rotated by Docker): who reached the admin panel, from which IP.
+	log
 	@outsiders not remote_ip {$ADMIN_CIDRS}
 	respond @outsiders "Forbidden" 403
 	reverse_proxy uptime-kuma:3001

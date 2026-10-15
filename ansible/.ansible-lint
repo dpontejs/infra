@@ -2,3 +2,4 @@
 profile: production
 exclude_paths:
   - collections/
+  - inventory.yml

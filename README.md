@@ -1,6 +1,7 @@
 # Personal Cloud Infrastructure
 
 ![Status](https://img.shields.io/badge/status-work%20in%20progress-FFD43B?style=flat-square)
+[![CI](https://github.com/dpontejs/infra/actions/workflows/ci.yml/badge.svg)](https://github.com/dpontejs/infra/actions/workflows/ci.yml)
 ![Terraform](https://img.shields.io/badge/Terraform-844FBA?style=flat-square&logo=terraform&logoColor=white)
 ![Ansible](https://img.shields.io/badge/Ansible-EE0000?style=flat-square&logo=ansible&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat-square&logo=docker&logoColor=white)

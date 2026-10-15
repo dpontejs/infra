@@ -65,7 +65,7 @@ validation {
 
 A validation turns a dangerous mistake into an error *before* anything is created.
 
-> **CIDR in 30 seconds:** `186.236.214.9/32` means "exactly this one IP" (all 32 bits fixed).
+> **CIDR in 30 seconds:** `203.0.113.10/32` means "exactly this one IP" (all 32 bits fixed).
 > `0.0.0.0/0` means "every IPv4 address". `::/0` is the same for IPv6.
 
 ### `main.tf` — the resources

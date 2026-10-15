@@ -1,7 +1,7 @@
 # Automatic deploy (pull-based)
 
 - **Date:** 2026-10-15
-- **Status:** approved (implementation in progress)
+- **Status:** delivered (infra #11, portfolio #8 and #9)
 - **ADRs:** —
 
 ## Goal

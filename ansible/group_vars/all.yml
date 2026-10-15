@@ -10,3 +10,9 @@ firewall_allowed_tcp_ports: [22, 80, 443]
 
 swap_size_mb: 2048
 swap_swappiness: 10
+
+domain: diegoponte.dev
+stacks_dir: /opt/stacks
+# Started in this order; caddy first so the others are reachable as soon as they start.
+stacks_enabled: [caddy, uptime-kuma]
+# admin_cidrs comes from Terraform (terraform.tfvars) through the generated inventory.

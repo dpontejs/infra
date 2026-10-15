@@ -1,0 +1,39 @@
+---
+- name: Require admin CIDRs (they protect the admin panels)
+  ansible.builtin.assert:
+    that: admin_cidrs is defined and admin_cidrs is iterable and admin_cidrs | length > 0
+    fail_msg: "admin_cidrs is missing: run `make plan && make apply` so Terraform exposes it, then retry."
+
+- name: Install Docker SDK for Python (used by the community.docker modules)
+  ansible.builtin.apt:
+    name: python3-docker
+    state: present
+
+- name: Create shared network for services behind Caddy
+  community.docker.docker_network:
+    name: web
+
+- name: Copy stacks to the server
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../stacks/"
+    dest: "{{ stacks_dir }}/"
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: u=rwX,g=rX,o=rX
+  notify: Reload caddy
+
+- name: Write Caddy environment
+  ansible.builtin.template:
+    src: caddy.env.j2
+    dest: "{{ stacks_dir }}/caddy/.env"
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: "0640"
+  notify: Restart caddy
+
+- name: Start stacks
+  community.docker.docker_compose_v2:
+    project_src: "{{ stacks_dir }}/{{ item }}"
+    state: present
+    pull: missing
+  loop: "{{ stacks_enabled }}"

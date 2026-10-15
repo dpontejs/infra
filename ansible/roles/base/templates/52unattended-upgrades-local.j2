@@ -1,0 +1,6 @@
+// {{ ansible_managed }}
+// Security updates that need a reboot (e.g. a new kernel) reboot the server at night.
+// Containers come back on their own thanks to their restart policy.
+Unattended-Upgrade::Automatic-Reboot "true";
+Unattended-Upgrade::Automatic-Reboot-Time "04:30";
+Unattended-Upgrade::Remove-Unused-Dependencies "true";

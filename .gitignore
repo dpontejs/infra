@@ -10,3 +10,5 @@ node_modules/
 dist/
 .astro/
 tfplan
+ansible/collections/
+ansible/inventory.yml

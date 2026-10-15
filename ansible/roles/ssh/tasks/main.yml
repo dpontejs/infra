@@ -1,0 +1,33 @@
+---
+# Safety net: never lock root out before the deploy user can log in.
+- name: Check that the deploy user has an authorized key
+  ansible.builtin.stat:
+    path: "/home/{{ deploy_user }}/.ssh/authorized_keys"
+  register: ssh_deploy_authorized_keys
+
+- name: Refuse to harden SSH without a working deploy user
+  ansible.builtin.assert:
+    that: ssh_deploy_authorized_keys.stat.exists and ssh_deploy_authorized_keys.stat.size > 0
+    fail_msg: "{{ deploy_user }} has no authorized_keys; hardening SSH now would lock you out."
+
+# Ubuntu 24.04 starts sshd on demand (systemd socket activation), so /run/sshd may not
+# exist yet; `sshd -t` (used to validate the config below) refuses to run without it.
+- name: Ensure sshd privilege separation directory exists
+  ansible.builtin.file:
+    path: /run/sshd
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+# Files in sshd_config.d are read in alphabetical order and the FIRST value wins,
+# so 10-hardening.conf overrides Ubuntu's 50-cloud-init.conf (PasswordAuthentication yes).
+- name: Harden SSH daemon
+  ansible.builtin.template:
+    src: 10-hardening.conf.j2
+    dest: /etc/ssh/sshd_config.d/10-hardening.conf
+    owner: root
+    group: root
+    mode: "0644"
+    validate: /usr/sbin/sshd -t -f %s
+  notify: Restart ssh

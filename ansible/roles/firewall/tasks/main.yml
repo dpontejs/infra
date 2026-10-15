@@ -1,0 +1,26 @@
+---
+# Second layer behind the Hetzner cloud firewall (terraform/): if one is misconfigured,
+# the other still blocks unexpected ports.
+- name: Install ufw
+  ansible.builtin.apt:
+    name: ufw
+    state: present
+
+- name: Rate-limit SSH (blocks IPs with 6+ connections in 30 s)
+  community.general.ufw:
+    rule: limit
+    port: "22"
+    proto: tcp
+
+- name: Allow web ports
+  community.general.ufw:
+    rule: allow
+    port: "{{ item }}"
+    proto: tcp
+  loop: "{{ firewall_allowed_tcp_ports | reject('equalto', 22) | list }}"
+
+- name: Deny incoming by default and enable ufw
+  community.general.ufw:
+    state: enabled
+    direction: incoming
+    policy: deny

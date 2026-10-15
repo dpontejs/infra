@@ -9,8 +9,8 @@ output "ipv6" {
 }
 
 output "ssh" {
-  description = "Command to connect to the server."
-  value       = "ssh -i ~/.ssh/hetzner_vps root@${hcloud_server.main.ipv4_address}"
+  description = "Command to connect to the server (root login is disabled by Ansible, step 03)."
+  value       = "ssh -i ~/.ssh/hetzner_vps deploy@${hcloud_server.main.ipv4_address}"
 }
 
 output "hostnames" {

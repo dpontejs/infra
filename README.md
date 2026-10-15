@@ -33,8 +33,8 @@ stack behind **Caddy** (automatic HTTPS), deployed by **GitHub Actions**, with b
 
 Each item is a vertical slice tracked as a GitHub issue.
 
-- [ ] **Provisioning with Terraform** — VPS, firewall, SSH key and DNS records as code.
-- [ ] **Server hardening with Ansible** — SSH keys only, firewall, fail2ban, automatic updates, swap, Docker.
+- [x] **Provisioning with Terraform** — VPS, firewall, SSH key and DNS records as code.
+- [x] **Server hardening with Ansible** — SSH keys only, firewall, fail2ban, automatic updates, swap, Docker.
 - [ ] **Reverse proxy and first services** — Caddy with automatic HTTPS, portfolio and Uptime Kuma.
 - [ ] **CI/CD deploy pipeline** — build images to GHCR and deploy to the VPS from GitHub Actions.
 - [ ] **Shared database and backups** — Postgres + pgvector, scheduled backups to object storage, tested restore.
@@ -46,10 +46,11 @@ Each step is documented as a didactic guide: concepts, walkthrough of the code, 
 
 1. [Provisioning a server with Terraform](docs/guide/01-provisioning-with-terraform.md)
 2. [Pointing a domain to the server with Cloudflare DNS](docs/guide/02-dns-with-cloudflare.md)
+3. [Hardening and configuring the server with Ansible](docs/guide/03-server-hardening-with-ansible.md)
 
 ## Usage
 
-Requirements: Terraform ≥ 1.9, a Hetzner Cloud project, a domain on Cloudflare and an SSH key.
+Requirements: Terraform ≥ 1.9, Ansible (`ansible-core` + `ansible-lint`), a Hetzner Cloud project, a domain on Cloudflare and an SSH key.
 
 ```bash
 # API tokens, kept outside the repo (chmod 600)
@@ -62,13 +63,18 @@ cp terraform/example.tfvars terraform/terraform.tfvars   # set admin_cidrs to yo
 make init
 make plan    # review what will change
 make apply   # apply exactly the reviewed plan
+
+make bootstrap   # first Ansible run, as root; disables root login at the end
+make configure   # every later run, as the deploy user
 ```
 
 | Command | What it does |
 |---|---|
-| `make test` | Terraform tests with a mocked provider (no cloud calls) |
-| `make lint` | `terraform fmt -check` + `terraform validate` |
+| `make test` | Terraform tests with mocked providers (no cloud calls) + Ansible syntax check |
+| `make lint` | `terraform fmt -check` + `terraform validate` + `ansible-lint` (production profile) |
 | `make plan` / `make apply` | Plan to a file, then apply that exact plan |
+| `make bootstrap` / `make configure` | Configure the server with Ansible (first run as root / later runs as `deploy`) |
+| `make check` | Ansible dry run: shows what would change |
 
 SSH is only reachable from `admin_cidrs`. If your home IP changes, update `terraform.tfvars` and run
 `make plan && make apply` again.

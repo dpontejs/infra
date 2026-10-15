@@ -1,0 +1,8 @@
+# {{ ansible_managed }}
+PermitRootLogin no
+PasswordAuthentication no
+KbdInteractiveAuthentication no
+PubkeyAuthentication yes
+AllowUsers {{ deploy_user }}
+MaxAuthTries 3
+X11Forwarding no

@@ -1,0 +1,12 @@
+---
+# User that owns deployments and is used by Ansible after the bootstrap run.
+deploy_user: deploy
+deploy_ssh_public_key_path: ~/.ssh/hetzner_vps.pub
+
+timezone: America/Fortaleza
+
+# Ports open in the host firewall (ufw). Must match the Hetzner cloud firewall in terraform/.
+firewall_allowed_tcp_ports: [22, 80, 443]
+
+swap_size_mb: 2048
+swap_swappiness: 10

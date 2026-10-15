@@ -9,7 +9,7 @@ permissions:
   contents: read
 
 jobs:
-  terraform:
+  checks:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -17,5 +17,9 @@ jobs:
       - uses: hashicorp/setup-terraform@v4
         with:
           terraform_version: 1.16.6
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - run: pip install ansible-core ansible-lint
       - run: make lint
       - run: make test

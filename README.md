@@ -40,6 +40,29 @@ Each item is a vertical slice tracked as a GitHub issue.
 - [ ] **Shared database and backups** — Postgres + pgvector, scheduled backups to object storage, tested restore.
 - [ ] **Cloudflare Tunnel to the home GPU** — expose GPU services from the home PC securely.
 
+## Usage
+
+Requirements: Terraform ≥ 1.9, a Hetzner Cloud project and an SSH key.
+
+```bash
+# Hetzner API token, kept outside the repo (chmod 600)
+echo 'export HCLOUD_TOKEN=...' > ~/.config/infra/secrets.env
+
+cp terraform/example.tfvars terraform/terraform.tfvars   # set admin_cidrs to your IP
+make init
+make plan    # review what will change
+make apply   # apply exactly the reviewed plan
+```
+
+| Command | What it does |
+|---|---|
+| `make test` | Terraform tests with a mocked provider (no cloud calls) |
+| `make lint` | `terraform fmt -check` + `terraform validate` |
+| `make plan` / `make apply` | Plan to a file, then apply that exact plan |
+
+SSH is only reachable from `admin_cidrs`. If your home IP changes, update `terraform.tfvars` and run
+`make plan && make apply` again.
+
 ## Budget
 
 Target: under R$ 50/month (VPS ~€6/month + domain ~US$ 12/year; Cloudflare DNS, Tunnel and R2 free tier).

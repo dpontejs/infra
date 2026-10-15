@@ -1,0 +1,12 @@
+# {{ ansible_managed }}
+[Unit]
+Description=Deploy a new image for stack %i if one is available
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+User={{ deploy_user }}
+# Creates /var/lib/stack-update owned by the user above (list of known-bad images).
+StateDirectory=stack-update
+ExecStart=/usr/local/bin/stack-update --stacks-dir {{ stacks_dir }} --state-dir /var/lib/stack-update %i

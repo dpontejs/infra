@@ -45,6 +45,9 @@ That's why `.dev` (HTTPS-only, HSTS preload) didn't open before this step, and w
 
 ### `stacks/caddy/conf/Caddyfile`
 
+> **Update (step 05):** the apex now proxies to the portfolio container (`reverse_proxy portfolio:80`)
+> instead of serving a placeholder folder. The snippet below shows the original static setup.
+
 ```caddy
 {$DOMAIN} {
 	import security_headers

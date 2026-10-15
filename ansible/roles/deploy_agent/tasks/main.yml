@@ -1,0 +1,29 @@
+---
+# Pull-based deploys: see docs/features/auto-deploy.md.
+- name: Install the stack-update agent
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../agent/stack_update.py"
+    dest: /usr/local/bin/stack-update
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Install systemd units (one instance per stack, e.g. stack-update@portfolio)
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "/etc/systemd/system/{{ item }}"
+    owner: root
+    group: root
+    mode: "0644"
+  loop: [stack-update@.service, stack-update@.timer]
+  notify: Reload systemd
+
+- name: Apply unit changes before enabling timers
+  ansible.builtin.meta: flush_handlers
+
+- name: Enable a timer per auto-updated stack
+  ansible.builtin.systemd_service:
+    name: "stack-update@{{ item }}.timer"
+    state: started
+    enabled: true
+  loop: "{{ auto_update_stacks }}"

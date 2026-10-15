@@ -12,3 +12,6 @@ dist/
 tfplan
 ansible/collections/
 ansible/inventory.yml
+__pycache__/
+*.pyc
+.omc/

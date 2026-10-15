@@ -12,7 +12,6 @@ services:
       # A directory, not the single file: tools that replace the file (Ansible, editors) create a
       # new inode, and a single-file bind mount would keep showing the old content.
       - ./conf:/etc/caddy:ro
-      - ./site:/srv/portfolio:ro
       - caddy_data:/data        # certificates and ACME account: losing it means re-issuing everything
       - caddy_config:/config
     networks:

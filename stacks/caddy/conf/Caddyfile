@@ -22,9 +22,17 @@ www.{$DOMAIN} {
 	redir https://{$DOMAIN}{uri} permanent
 }
 
-# Flamengo News: newsletter sign-up page (stacks/flamengo-news). /api/subscribers checks its own token.
+# Urubu News: newsletter sign-up page (stacks/flamengo-news). /api/* checks its own token.
+urubunews.{$DOMAIN} {
+	import security_headers
+	reverse_proxy flamengo-news:8000
+}
+
+# Old address of the same page. E-mails already sent link here (unsubscribe, one-click POST from
+# Gmail, confirmation, logo), and not every client follows redirects: only the home page moves.
 flamengo.{$DOMAIN} {
 	import security_headers
+	redir / https://urubunews.{$DOMAIN}/ permanent
 	reverse_proxy flamengo-news:8000
 }
 

@@ -1,5 +1,12 @@
 mock_provider "hcloud" {}
 
+mock_provider "cloudflare" {
+  override_data {
+    target = data.cloudflare_zone.main
+    values = { id = "zone-123" }
+  }
+}
+
 variables {
   admin_cidrs         = ["203.0.113.10/32"]
   ssh_public_key_path = "tests/fixtures/test_key.pub"

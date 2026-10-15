@@ -38,6 +38,30 @@
     mode: "0640"
   notify: Restart caddy
 
+- name: Require Flamengo News secrets
+  ansible.builtin.assert:
+    that:
+      - lookup('env', 'FLAMENGO_NEWS_SUBSCRIBE_SECRET') | length >= 32
+      - lookup('env', 'FLAMENGO_NEWS_API_TOKEN') | length >= 32
+      - lookup('env', 'FLAMENGO_NEWS_RESEND_API_KEY') | length > 0
+    fail_msg: >-
+      Set FLAMENGO_NEWS_SUBSCRIBE_SECRET and FLAMENGO_NEWS_API_TOKEN (32+ chars, e.g. `openssl rand -hex 32`)
+      and FLAMENGO_NEWS_RESEND_API_KEY in ~/.config/infra/secrets.env.
+    quiet: true
+  no_log: true
+  when: "'flamengo-news' in stacks_enabled"
+
+- name: Write Flamengo News environment
+  ansible.builtin.template:
+    src: flamengo-news.env.j2
+    dest: "{{ stacks_dir }}/flamengo-news/.env"
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: "0600"
+  no_log: true
+  when: "'flamengo-news' in stacks_enabled"
+  notify: Restart flamengo-news
+
 - name: Start stacks
   community.docker.docker_compose_v2:
     project_src: "{{ stacks_dir }}/{{ item }}"

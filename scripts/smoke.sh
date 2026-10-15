@@ -29,6 +29,8 @@ check "certificate valid (curl verifies TLS)"    0  "$(curl -s -o /dev/null --ma
 check "status panel reachable from admin IP"     200 "$(status -L "https://status.$domain/")"
 check "version.json has a commit"                ok "$(curl -s --max-time 15 "https://$domain/version.json" | grep -qE '"commit":"[0-9a-f]{40}"' && echo ok || echo missing)"
 check "version.json is never cached"             no-store "$(header "https://$domain/version.json" cache-control)"
+check "flamengo news sign-up page responds 200" 200 "$(status "https://flamengo.$domain/")"
+check "flamengo news subscribers API needs a token" 401 "$(status "https://flamengo.$domain/api/subscribers")"
 
 if ((failures > 0)); then
   echo "$failures check(s) failed"

@@ -52,7 +52,7 @@ variable "domain" {
 variable "subdomains" {
   description = "Subdomains that point to the server, besides the apex (the domain itself)."
   type        = list(string)
-  default     = ["www", "status", "rag", "mlflow"]
+  default     = ["www", "status", "rag", "mlflow", "flamengo"]
 
   validation {
     condition     = alltrue([for s in var.subdomains : can(regex("^[a-z0-9]([a-z0-9-]*[a-z0-9])?$", s))])

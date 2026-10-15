@@ -46,11 +46,11 @@ bootstrap: ansible-deps inventory
 
 # Every later run: connects as the deploy user.
 configure: ansible-deps inventory
-	$(ANSIBLE) ansible-playbook playbook.yml
+	. $(SECRETS) && $(ANSIBLE) ansible-playbook playbook.yml
 
 # Dry run: shows what would change, without changing anything.
 check: ansible-deps inventory
-	$(ANSIBLE) ansible-playbook playbook.yml --check --diff
+	. $(SECRETS) && $(ANSIBLE) ansible-playbook playbook.yml --check --diff
 
 # Validates every stack offline: compose files and the Caddyfile (with sample values).
 stacks-test:

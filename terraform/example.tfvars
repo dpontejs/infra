@@ -4,4 +4,4 @@ admin_cidrs = ["203.0.113.10/32"] # your public IP: curl -s https://ifconfig.me
 # server_type         = "cx23"
 # location            = "nbg1"
 # domain              = "diegoponte.dev"
-# subdomains          = ["www", "status", "rag", "mlflow"]
+# subdomains          = ["www", "status", "rag", "mlflow", "flamengo"]

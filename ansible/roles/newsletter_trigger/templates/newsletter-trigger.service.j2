@@ -1,0 +1,15 @@
+# {{ ansible_managed }}
+[Unit]
+Description=Dispatch the Urubu News newsletter workflow on GitHub Actions
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+DynamicUser=yes
+EnvironmentFile=/etc/newsletter-trigger.env
+ExecStart=/usr/local/bin/newsletter-trigger
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+NoNewPrivileges=yes

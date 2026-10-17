@@ -25,6 +25,6 @@ auto_update_stacks: [portfolio, flamengo-news]
 # (~/.config/infra/secrets.env, sourced by `make configure`), never from the repo.
 flamengo_news_public_url: "https://urubunews.{{ domain }}"
 flamengo_news_sender: "Urubu News <news@{{ domain }}>"
-# The VPS dispatches the newsletter workflow (the Actions cron at 08:23 is only a backup).
+# The VPS asks the app every 10 min which edition is due and dispatches it (Actions hourly cron: backup).
 newsletter_trigger_repo: dpontejs/flamengo-news
-newsletter_trigger_schedule: "Mon,Fri *-*-* 08:00:00 America/Sao_Paulo"
+newsletter_trigger_schedule: "*:0/10"

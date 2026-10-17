@@ -16,6 +16,7 @@ test: ansible-deps
 	$(ANSIBLE) ansible-playbook -i localhost, --syntax-check playbook.yml
 	@$(MAKE) -s stacks-test
 	python3 -m unittest discover -s agent
+	python3 -m unittest discover -s tests
 
 lint: ansible-deps
 	$(TF) fmt -check -recursive

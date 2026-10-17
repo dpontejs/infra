@@ -1,15 +1,17 @@
 # {{ ansible_managed }}
 [Unit]
-Description=Dispatch the Urubu News newsletter workflow on GitHub Actions
+Description=Dispatch the Urubu News edition the match calendar has due
 Wants=network-online.target
-After=network-online.target
+After=network-online.target docker.service
 
 [Service]
 Type=oneshot
-DynamicUser=yes
+# deploy is in the docker group: it asks the app container which edition is due.
+User={{ deploy_user }}
+StateDirectory=newsletter-trigger
 EnvironmentFile=/etc/newsletter-trigger.env
+Environment=COMPOSE_FILE={{ stacks_dir }}/flamengo-news/compose.yml
 ExecStart=/usr/local/bin/newsletter-trigger
-ProtectSystem=strict
-ProtectHome=yes
+ProtectSystem=full
 PrivateTmp=yes
 NoNewPrivileges=yes

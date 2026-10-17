@@ -1,6 +1,7 @@
 ---
-# GitHub drops scheduled Actions runs under load, so the VPS presses the button at 08:00 BRT.
-# The workflow's own cron (08:23) is the backup; `skip_if_sent` keeps the edition from going out twice.
+# GitHub drops scheduled Actions runs under load, so the VPS presses the button: every 10 minutes it
+# asks the app (`flanews due`) which edition the match calendar has due and dispatches it once.
+# The workflow's own hourly cron is the backup; `skip_if_sent` keeps an edition from going out twice.
 - name: Require the GitHub token that dispatches the newsletter
   ansible.builtin.assert:
     that: lookup('env', 'FLAMENGO_NEWS_GITHUB_TOKEN') | length > 0

@@ -1,11 +1,10 @@
 # {{ ansible_managed }}
 [Unit]
-Description=Send the Urubu News every Monday and Friday at 08:00 BRT
+Description=Check the match calendar for a due Urubu News edition every 10 minutes
 
 [Timer]
-# No Persistent=: a late catch-up after a reboot could send the wrong edition; the Actions cron covers it.
 OnCalendar={{ newsletter_trigger_schedule }}
-AccuracySec=1s
+AccuracySec=30s
 
 [Install]
 WantedBy=timers.target

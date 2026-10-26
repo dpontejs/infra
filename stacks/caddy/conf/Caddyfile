@@ -45,3 +45,14 @@ status.{$DOMAIN} {
 	respond @outsiders "Forbidden" 403
 	reverse_proxy uptime-kuma:3001
 }
+
+# EdutorIA: internal demo of a separate project (github.com/dpontejs/edutor-ia), deployed from its own
+# compose files in /opt/stacks/edutoria. Its own Caddy routes the SPA, the API, auth and signed S3 URLs
+# over plain HTTP inside the `web` network; TLS ends here. 16 MB covers its largest upload (a PDF).
+edutoria.{$DOMAIN} {
+	import security_headers
+	request_body {
+		max_size 16MB
+	}
+	reverse_proxy edutoria-web:80
+}

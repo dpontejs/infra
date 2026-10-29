@@ -26,6 +26,7 @@ stack behind **Caddy** (automatic HTTPS), deployed by **GitHub Actions**, with b
   │   ├─ rag.diegoponte.dev      → RAG demo API
   │   ├─ mlflow.diegoponte.dev   → MLflow (auth)
   │   ├─ urubunews.diegoponte.dev → Urubu News sign-up
+  │   ├─ edutoria.diegoponte.dev  → EdutorIA (internal demo)
   │   └─ status.diegoponte.dev   → Uptime Kuma
   ├─ Postgres + pgvector (shared)
   └─ scheduled jobs (flamengo-news, planning-ai)

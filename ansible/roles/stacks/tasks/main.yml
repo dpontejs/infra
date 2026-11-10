@@ -62,6 +62,29 @@
   when: "'flamengo-news' in stacks_enabled"
   notify: Restart flamengo-news
 
+- name: Require today secrets
+  ansible.builtin.assert:
+    that:
+      - lookup('env', 'TODAY_PASSPHRASE_HASH') is match('^\\$argon2')
+      - lookup('env', 'TODAY_SESSION_SECRET') | length >= 32
+    fail_msg: >-
+      Set TODAY_PASSPHRASE_HASH (an Argon2 hash, see the today repo's .env.example) and
+      TODAY_SESSION_SECRET (32+ chars, e.g. `openssl rand -hex 32`) in ~/.config/infra/secrets.env.
+    quiet: true
+  no_log: true
+  when: "'today' in stacks_enabled"
+
+- name: Write today environment
+  ansible.builtin.template:
+    src: today.env.j2
+    dest: "{{ stacks_dir }}/today/.env"
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: "0600"
+  no_log: true
+  when: "'today' in stacks_enabled"
+  notify: Restart today
+
 - name: Start stacks
   community.docker.docker_compose_v2:
     project_src: "{{ stacks_dir }}/{{ item }}"

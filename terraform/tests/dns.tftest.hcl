@@ -98,3 +98,18 @@ run "rejects_invalid_subdomain" {
 
   expect_failures = [var.subdomains]
 }
+
+# Outlook rejects mail without DMARC (550 5.7.1 "lacks SPF/DKIM/DMARC Auth Records").
+run "domain_publishes_a_dmarc_policy" {
+  command = apply
+
+  assert {
+    condition     = cloudflare_dns_record.dmarc.name == "_dmarc.diegoponte.dev" && cloudflare_dns_record.dmarc.type == "TXT"
+    error_message = "DMARC must be a TXT record at _dmarc.<domain>"
+  }
+
+  assert {
+    condition     = startswith(trim(cloudflare_dns_record.dmarc.content, "\""), "v=DMARC1; p=none;")
+    error_message = "DMARC must start with v=DMARC1 and a monitoring-only policy (p=none)"
+  }
+}

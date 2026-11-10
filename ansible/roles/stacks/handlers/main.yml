@@ -18,3 +18,9 @@
     project_src: "{{ stacks_dir }}/flamengo-news"
     state: present
     recreate: always
+
+- name: Restart today
+  community.docker.docker_compose_v2:
+    project_src: "{{ stacks_dir }}/today"
+    state: present
+    recreate: always

@@ -36,6 +36,12 @@ flamengo.{$DOMAIN} {
 	reverse_proxy flamengo-news:8000
 }
 
+# today: reminders PWA (stacks/today). Login, session and rate limit live in the app.
+today.{$DOMAIN} {
+	import security_headers
+	reverse_proxy today:8000
+}
+
 # Uptime Kuma: admin panel, only reachable from ADMIN_CIDRS.
 status.{$DOMAIN} {
 	import security_headers

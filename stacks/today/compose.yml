@@ -1,0 +1,32 @@
+services:
+  today:
+    # Reminders PWA (github.com/dpontejs/today), built and pushed by that repo's CI.
+    # The stack-update agent follows this moving tag; the healthcheck comes from the image.
+    image: ghcr.io/dpontejs/today:main
+    restart: unless-stopped
+    # PASSPHRASE_HASH and SESSION_SECRET, written by Ansible.
+    # Optional only so `make stacks-test` validates offline; without it the app refuses to start.
+    env_file:
+      - path: .env
+        required: false
+    volumes:
+      - today_data:/data
+    # No published port: Caddy is the only client, which is what makes trusting X-Forwarded-For safe.
+    # Hardening: the app only writes to /data (SQLite) and /tmp; it needs no Linux capabilities.
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - web
+
+volumes:
+  # SQLite with the items: survives new images and container recreation.
+  today_data:
+
+networks:
+  web:
+    external: true

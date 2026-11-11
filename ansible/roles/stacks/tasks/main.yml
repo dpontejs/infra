@@ -68,10 +68,11 @@
       - lookup('env', 'TODAY_PASSPHRASE_HASH') is match('^\\$argon2')
       - lookup('env', 'TODAY_SESSION_SECRET') | length >= 32
       - lookup('env', 'TODAY_API_TOKEN') | length >= 32
+      - lookup('env', 'TODAY_GEMINI_API_KEY') | length > 0
     fail_msg: >-
       Set TODAY_PASSPHRASE_HASH (an Argon2 hash, see the today repo's .env.example),
       TODAY_SESSION_SECRET and TODAY_API_TOKEN (32+ chars each, e.g. `openssl rand -hex 32`)
-      in ~/.config/infra/secrets.env.
+      and TODAY_GEMINI_API_KEY in ~/.config/infra/secrets.env.
     quiet: true
   no_log: true
   when: "'today' in stacks_enabled"

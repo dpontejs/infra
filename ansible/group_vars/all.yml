@@ -28,9 +28,10 @@ flamengo_news_sender: "Urubu News <news@{{ domain }}>"
 # The VPS asks the app every 10 min which edition is due and dispatches it (Actions hourly cron: backup).
 newsletter_trigger_repo: dpontejs/flamengo-news
 # Geral (newsletters per team, takes over the Urubu News later). Same Resend account and sender
-# domain as the Urubu; its own signing secret and API token.
+# domain as the Urubu; its own signing secret and API token. geral@ sends the hub's own e-mails
+# (confirmation); each newsletter sends from its own mailbox (teams.toml `sender`, geral repo).
 geral_public_url: "https://geral.{{ domain }}"
-geral_sender: "Geral <news@{{ domain }}>"
+geral_sender: "Geral <geral@{{ domain }}>"
 # The VPS asks the Geral every 10 min which team editions are due and dispatches each one.
 geral_trigger_repo: dpontejs/geral
 geral_trigger_schedule: "*:0/10"

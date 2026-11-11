@@ -31,10 +31,12 @@ check "version.json has a commit"                ok "$(curl -s --max-time 15 "ht
 check "version.json is never cached"             no-store "$(header "https://$domain/version.json" cache-control)"
 check "geral portal responds 200"                200 "$(status "https://geral.$domain/")"
 check "geral subscribers API needs a token"       401 "$(status "https://geral.$domain/api/subscribers?team=vasco")"
-check "urubu news sign-up page responds 200"     200 "$(status "https://urubunews.$domain/")"
-check "urubu news subscribers API needs a token" 401 "$(status "https://urubunews.$domain/api/subscribers")"
+check "urubu news home redirects to the geral"   301 "$(status "https://urubunews.$domain/")"
+check "urubu news redirect target"               "https://geral.$domain/" "$(header "https://urubunews.$domain/" location)"
+check "urubu news API (geral) needs a token"     401 "$(status "https://urubunews.$domain/api/subscribers?team=flamengo")"
+check "urubu news logo of old e-mails"           200 "$(status "https://urubunews.$domain/static/logo-email.png")"
 check "old flamengo address redirects home (301)" 301 "$(status "https://flamengo.$domain/")"
-check "old flamengo redirect target"              "https://urubunews.$domain/" "$(header "https://flamengo.$domain/" location)"
+check "old flamengo redirect target"              "https://geral.$domain/" "$(header "https://flamengo.$domain/" location)"
 check "old flamengo address still serves links"   200 "$(status "https://flamengo.$domain/static/logo-email.png")"
 
 if ((failures > 0)); then

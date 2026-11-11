@@ -22,18 +22,19 @@ www.{$DOMAIN} {
 	redir https://{$DOMAIN}{uri} permanent
 }
 
-# Urubu News: newsletter sign-up page (stacks/flamengo-news). /api/* checks its own token.
+# Urubu News: moved into the Geral (geral repo, docs/adr/0001). E-mails already sent link here
+# (unsubscribe, one-click POST from Gmail, bets, ranking, logo): the Geral answers them with the old
+# signing secret; its home page redirects to the Geral portal. stacks/flamengo-news stays up, unrouted,
+# as the way back.
 urubunews.{$DOMAIN} {
 	import security_headers
-	reverse_proxy flamengo-news:8000
+	reverse_proxy geral:8000
 }
 
-# Old address of the same page. E-mails already sent link here (unsubscribe, one-click POST from
-# Gmail, confirmation, logo), and not every client follows redirects: only the home page moves.
+# Oldest address of the Urubu News: same as above (the Geral redirects its home page too).
 flamengo.{$DOMAIN} {
 	import security_headers
-	redir / https://urubunews.{$DOMAIN}/ permanent
-	reverse_proxy flamengo-news:8000
+	reverse_proxy geral:8000
 }
 
 # Geral: newsletters per team (stacks/geral). /api/* checks its own token.

@@ -41,8 +41,8 @@
 - name: Apply unit changes before enabling the timer
   ansible.builtin.meta: flush_handlers
 
-- name: Enable the newsletter trigger timer
+- name: Enable (or, after the move into the Geral, disable) the newsletter trigger timer
   ansible.builtin.systemd_service:
     name: newsletter-trigger.timer
-    state: started
-    enabled: true
+    state: "{{ 'started' if newsletter_trigger_enabled | default(true) else 'stopped' }}"
+    enabled: "{{ newsletter_trigger_enabled | default(true) }}"

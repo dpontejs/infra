@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+# Every 10 minutes: asks the Geral page which team editions are due (`geral due --all`, from each
+# team's match calendar, only teams with subscribers) and dispatches the workflow for each one,
+# once per team and edition (kept in the state file). The Actions hourly cron is the backup.
+# The token goes to curl through stdin, never in argv.
+set -euo pipefail
+
+state="${STATE_DIRECTORY:-/var/lib/geral-trigger}/dispatched"
+touch "$state"
+
+# stdout: "slug<TAB>kind<TAB>YYYY-MM-DD<TAB>label" per due team, or nothing; logs go to stderr.
+due=$(docker compose -f "$COMPOSE_FILE" exec -T geral python -m geral due --all)
+if [ -z "$due" ]; then
+  exit 0
+fi
+
+url="https://api.github.com/repos/${GITHUB_REPO}/actions/workflows/newsletter.yml/dispatches"
+failed=0
+# fd 3 keeps the list apart from stdin, which curl reads its config (the token) from.
+while IFS=$'\t' read -r -u 3 team kind day label; do
+  [ -n "$team" ] || continue
+  key="$team|$label"
+  if grep -qxF "$key" "$state"; then
+    echo "already dispatched: $key"
+    continue
+  fi
+  body=$(printf '{"ref":"main","inputs":{"team":"%s","edition":"%s","date":"%s","dry_run":"false","skip_if_sent":"true"}}' \
+    "$team" "$kind" "$day")
+  if curl --config - --fail-with-body --silent --show-error --max-time 30 \
+    --retry 5 --retry-delay 30 --retry-all-errors \
+    --request POST --data "$body" "$url" <<CONFIG
+header = "Authorization: Bearer ${GITHUB_TOKEN}"
+header = "Accept: application/vnd.github+json"
+header = "X-GitHub-Api-Version: 2022-11-28"
+CONFIG
+  then
+    echo "$key" >>"$state"
+    echo "dispatched: $key"
+  else
+    echo "dispatch failed, retrying next tick: $key" >&2
+    failed=1
+  fi
+done 3<<<"$due"
+exit "$failed"

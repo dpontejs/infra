@@ -31,4 +31,7 @@ newsletter_trigger_repo: dpontejs/flamengo-news
 # domain as the Urubu; its own signing secret and API token.
 geral_public_url: "https://geral.{{ domain }}"
 geral_sender: "Geral <news@{{ domain }}>"
+# The VPS asks the Geral every 10 min which team editions are due and dispatches each one.
+geral_trigger_repo: dpontejs/geral
+geral_trigger_schedule: "*:0/10"
 newsletter_trigger_schedule: "*:0/10"

@@ -1,0 +1,48 @@
+---
+# Same idea as newsletter_trigger (Urubu News), for every team of the Geral: every 10 minutes the
+# VPS asks the page (`geral due --all`) which team editions are due and dispatches each one once.
+# The workflow's own hourly cron is the backup; `skip_if_sent` keeps an edition from going out twice.
+- name: Require the GitHub token that dispatches the Geral newsletters
+  ansible.builtin.assert:
+    that: lookup('env', 'GERAL_GITHUB_TOKEN') | length > 0
+    fail_msg: >-
+      Set GERAL_GITHUB_TOKEN in ~/.config/infra/secrets.env: a fine-grained token with access
+      to {{ geral_trigger_repo }} only and the "Actions: Read and write" permission.
+    quiet: true
+  no_log: true
+
+- name: Install the geral trigger
+  ansible.builtin.copy:
+    src: geral-trigger
+    dest: /usr/local/bin/geral-trigger
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Write the geral trigger's token (read by systemd only)
+  ansible.builtin.template:
+    src: geral-trigger.env.j2
+    dest: /etc/geral-trigger.env
+    owner: root
+    group: root
+    mode: "0600"
+  no_log: true
+
+- name: Install the geral trigger's systemd units
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "/etc/systemd/system/{{ item }}"
+    owner: root
+    group: root
+    mode: "0644"
+  loop: [geral-trigger.service, geral-trigger.timer]
+  notify: Reload systemd for the geral trigger
+
+- name: Apply unit changes before enabling the timer
+  ansible.builtin.meta: flush_handlers
+
+- name: Enable the geral trigger timer
+  ansible.builtin.systemd_service:
+    name: geral-trigger.timer
+    state: started
+    enabled: true

@@ -31,7 +31,7 @@ stack behind **Caddy** (automatic HTTPS), deployed by **GitHub Actions**, with b
   │   ├─ geral.diegoponte.dev     → Geral (newsletters per team)
   │   └─ status.diegoponte.dev   → Uptime Kuma
   ├─ Postgres + pgvector (shared)
-  └─ scheduled jobs (flamengo-news)
+  └─ scheduled jobs (flamengo-news, geral)
 ```
 
 ## Roadmap

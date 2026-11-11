@@ -1,0 +1,17 @@
+# {{ ansible_managed }}
+[Unit]
+Description=Dispatch the Geral team editions the match calendars have due
+Wants=network-online.target
+After=network-online.target docker.service
+
+[Service]
+Type=oneshot
+# deploy is in the docker group: it asks the page container which editions are due.
+User={{ deploy_user }}
+StateDirectory=geral-trigger
+EnvironmentFile=/etc/geral-trigger.env
+Environment=COMPOSE_FILE={{ stacks_dir }}/geral/compose.yml
+ExecStart=/usr/local/bin/geral-trigger
+ProtectSystem=full
+PrivateTmp=yes
+NoNewPrivileges=yes

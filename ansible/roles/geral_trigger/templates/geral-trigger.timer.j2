@@ -1,0 +1,10 @@
+# {{ ansible_managed }}
+[Unit]
+Description=Check the Geral team calendars for due editions every 10 minutes
+
+[Timer]
+OnCalendar={{ geral_trigger_schedule }}
+AccuracySec=30s
+
+[Install]
+WantedBy=timers.target

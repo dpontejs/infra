@@ -62,6 +62,30 @@
   when: "'flamengo-news' in stacks_enabled"
   notify: Restart flamengo-news
 
+- name: Require Geral secrets
+  ansible.builtin.assert:
+    that:
+      - lookup('env', 'GERAL_SUBSCRIBE_SECRET') | length >= 32
+      - lookup('env', 'GERAL_API_TOKEN') | length >= 32
+      - lookup('env', 'FLAMENGO_NEWS_RESEND_API_KEY') | length > 0
+    fail_msg: >-
+      Set GERAL_SUBSCRIBE_SECRET and GERAL_API_TOKEN (32+ chars, e.g. `openssl rand -hex 32`) in
+      ~/.config/infra/secrets.env; the Resend key is the Urubu's (FLAMENGO_NEWS_RESEND_API_KEY).
+    quiet: true
+  no_log: true
+  when: "'geral' in stacks_enabled"
+
+- name: Write Geral environment
+  ansible.builtin.template:
+    src: geral.env.j2
+    dest: "{{ stacks_dir }}/geral/.env"
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: "0600"
+  no_log: true
+  when: "'geral' in stacks_enabled"
+  notify: Restart geral
+
 - name: Require today secrets
   ansible.builtin.assert:
     that:

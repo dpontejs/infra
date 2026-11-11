@@ -36,6 +36,12 @@ flamengo.{$DOMAIN} {
 	reverse_proxy flamengo-news:8000
 }
 
+# Geral: newsletters per team (stacks/geral). /api/* checks its own token.
+geral.{$DOMAIN} {
+	import security_headers
+	reverse_proxy geral:8000
+}
+
 # today: reminders PWA (stacks/today). Login, session and rate limit live in the app.
 today.{$DOMAIN} {
 	import security_headers

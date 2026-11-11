@@ -17,9 +17,9 @@ stacks_dir: /opt/stacks
 docker_web_subnet_ipv4: 172.18.0.0/16
 docker_web_subnet_ipv6: fd4d:6f6e:6974::/64
 # Started in this order; caddy first so the others are reachable as soon as they start.
-stacks_enabled: [caddy, uptime-kuma, portfolio, flamengo-news, today]
+stacks_enabled: [caddy, uptime-kuma, portfolio, flamengo-news, today, geral]
 # Stacks deployed automatically when a new image is pushed (docs/features/auto-deploy.md).
-auto_update_stacks: [portfolio, flamengo-news, today]
+auto_update_stacks: [portfolio, flamengo-news, today, geral]
 # admin_cidrs comes from Terraform (terraform.tfvars) through the generated inventory.
 # Urubu News (Flamengo newsletter) sign-up page. Secrets come from the admin machine's environment
 # (~/.config/infra/secrets.env, sourced by `make configure`), never from the repo.
@@ -27,4 +27,8 @@ flamengo_news_public_url: "https://urubunews.{{ domain }}"
 flamengo_news_sender: "Urubu News <news@{{ domain }}>"
 # The VPS asks the app every 10 min which edition is due and dispatches it (Actions hourly cron: backup).
 newsletter_trigger_repo: dpontejs/flamengo-news
+# Geral (newsletters per team, takes over the Urubu News later). Same Resend account and sender
+# domain as the Urubu; its own signing secret and API token.
+geral_public_url: "https://geral.{{ domain }}"
+geral_sender: "Geral <news@{{ domain }}>"
 newsletter_trigger_schedule: "*:0/10"

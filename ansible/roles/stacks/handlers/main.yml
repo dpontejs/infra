@@ -19,6 +19,12 @@
     state: present
     recreate: always
 
+- name: Restart geral
+  community.docker.docker_compose_v2:
+    project_src: "{{ stacks_dir }}/geral"
+    state: present
+    recreate: always
+
 - name: Restart today
   community.docker.docker_compose_v2:
     project_src: "{{ stacks_dir }}/today"

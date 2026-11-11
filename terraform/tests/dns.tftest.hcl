@@ -42,6 +42,7 @@ run "apex_and_subdomains_point_to_the_server" {
       "diegoponte.dev", "www.diegoponte.dev", "status.diegoponte.dev",
       "rag.diegoponte.dev", "mlflow.diegoponte.dev", "flamengo.diegoponte.dev",
       "urubunews.diegoponte.dev", "edutoria.diegoponte.dev", "today.diegoponte.dev",
+      "geral.diegoponte.dev",
     ])
     error_message = "A records must cover the apex and every subdomain"
   }

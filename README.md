@@ -28,6 +28,7 @@ stack behind **Caddy** (automatic HTTPS), deployed by **GitHub Actions**, with b
   │   ├─ urubunews.diegoponte.dev → Urubu News sign-up
   │   ├─ edutoria.diegoponte.dev  → EdutorIA (internal demo)
   │   ├─ today.diegoponte.dev     → today (reminders PWA)
+  │   ├─ geral.diegoponte.dev     → Geral (newsletters per team)
   │   └─ status.diegoponte.dev   → Uptime Kuma
   ├─ Postgres + pgvector (shared)
   └─ scheduled jobs (flamengo-news)

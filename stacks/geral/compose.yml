@@ -1,0 +1,31 @@
+services:
+  geral:
+    # Geral: portal and per-team newsletter sign-up, built and pushed by the geral
+    # repo's CI. The stack-update agent follows this moving tag; the healthcheck comes from the image.
+    image: ghcr.io/dpontejs/geral:main
+    restart: unless-stopped
+    # Secrets (SUBSCRIBE_SECRET, SUBSCRIBERS_API_TOKEN, RESEND_API_KEY...) written by Ansible.
+    # Optional only so `make stacks-test` validates offline; without it the app refuses to start.
+    env_file:
+      - path: .env
+        required: false
+    volumes:
+      - geral_data:/data
+    # Hardening: the app only writes to /data (SQLite) and /tmp; it needs no Linux capabilities.
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - web
+
+volumes:
+  # SQLite with subscribers, teams and latest editions: survives new images and container recreation.
+  geral_data:
+
+networks:
+  web:
+    external: true

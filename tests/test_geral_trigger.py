@@ -80,6 +80,28 @@ class GeralTriggerTest(unittest.TestCase):
         self.assertIn("Authorization: Bearer secret-token", self.dispatched())  # via stdin config
         self.assertNotIn("secret-token", "\n".join(self.calls()))
 
+    def test_stage_column_is_dispatched(self) -> None:
+        result = self.run_trigger("vasco\tnews\t2026-11-16\tNotícias — 16/11/2026\tbuild\n")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        [call] = self.calls()
+        self.assertIn('"edition":"news","date":"2026-11-16","stage":"build"', call)
+
+    def test_build_and_send_of_same_label_both_dispatched(self) -> None:
+        line = "vasco\tnews\t2026-11-16\tNotícias — 16/11/2026\t"
+        self.run_trigger(line + "build\n")
+        self.run_trigger(line + "build\n")
+        self.run_trigger(line + "send\n")
+        self.assertEqual(len(self.calls()), 2)
+        self.assertEqual(
+            (self.state / "dispatched").read_text(),
+            "vasco|Notícias — 16/11/2026|build\nvasco|Notícias — 16/11/2026|send\n",
+        )
+
+    def test_four_columns_still_dispatch_without_stage(self) -> None:
+        self.run_trigger(VASCO)
+        [call] = self.calls()
+        self.assertNotIn('"stage"', call)
+
     def test_failed_team_is_retried_next_tick_and_does_not_block_the_others(self) -> None:
         result = self.run_trigger(VASCO + NAUTICO, fail_team="vasco")
         self.assertNotEqual(result.returncode, 0)

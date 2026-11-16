@@ -8,7 +8,8 @@ set -euo pipefail
 state="${STATE_DIRECTORY:-/var/lib/geral-trigger}/dispatched"
 touch "$state"
 
-# stdout: "slug<TAB>kind<TAB>YYYY-MM-DD<TAB>label" per due team, or nothing; logs go to stderr.
+# stdout: "slug<TAB>kind<TAB>YYYY-MM-DD<TAB>label[<TAB>stage]" per due team, or nothing; logs go
+# to stderr. stage = build (a draft the owner reviews) or send; each one is dispatched once.
 due=$(docker compose -f "$COMPOSE_FILE" exec -T geral python -m geral due --all)
 if [ -z "$due" ]; then
   exit 0
@@ -17,15 +18,17 @@ fi
 url="https://api.github.com/repos/${GITHUB_REPO}/actions/workflows/newsletter.yml/dispatches"
 failed=0
 # fd 3 keeps the list apart from stdin, which curl reads its config (the token) from.
-while IFS=$'\t' read -r -u 3 team kind day label; do
+while IFS=$'\t' read -r -u 3 team kind day label stage; do
   [ -n "$team" ] || continue
-  key="$team|$label"
+  key="$team|$label${stage:+|$stage}"
   if grep -qxF "$key" "$state"; then
     echo "already dispatched: $key"
     continue
   fi
-  body=$(printf '{"ref":"main","inputs":{"team":"%s","edition":"%s","date":"%s","dry_run":"false","skip_if_sent":"true"}}' \
-    "$team" "$kind" "$day")
+  stage_input=""
+  if [ -n "$stage" ]; then stage_input=$(printf ',"stage":"%s"' "$stage"); fi
+  body=$(printf '{"ref":"main","inputs":{"team":"%s","edition":"%s","date":"%s"%s,"dry_run":"false","skip_if_sent":"true"}}' \
+    "$team" "$kind" "$day" "$stage_input")
   if curl --config - --fail-with-body --silent --show-error --max-time 30 \
     --retry 5 --retry-delay 30 --retry-all-errors \
     --request POST --data "$body" "$url" <<CONFIG

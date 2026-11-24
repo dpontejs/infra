@@ -13,6 +13,10 @@ worked. No inbound port is opened: SSH stays restricted to the admin IP.
 ## Out of scope
 
 - Multi-server, blue/green or zero-downtime deploys (a static site restarts in ~1 s).
+  **Update 2026-11-23:** the Geral (an app, not a static site) restarts for a few seconds and its
+  games failed mid-play with a 502. Instead of blue/green (two containers on one SQLite file),
+  Caddy holds the request during the restart (`hold_during_deploy` in the Caddyfile:
+  `lb_try_duration 30s`); only connection failures are retried, so a POST is never sent twice.
 - Preview environments per PR.
 - Deploying `infra` itself (still `make configure`, from the admin machine).
 

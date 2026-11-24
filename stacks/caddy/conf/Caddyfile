@@ -12,6 +12,15 @@
 	}
 }
 
+# An app container restarts for a few seconds on every deploy (stack-update recreates it). Instead of a
+# 502 in the middle of a game, Caddy holds the request and keeps trying the app for up to 30 s. Only
+# requests that never reached the app are retried (the connection could not be made), so a POST is
+# never sent twice. Checked against a stopped upstream: a POST waits and gets the app's 200.
+(hold_during_deploy) {
+	lb_try_duration 30s
+	lb_try_interval 250ms
+}
+
 # Portfolio: its own container (stacks/portfolio), which already compresses and sets cache headers.
 {$DOMAIN} {
 	import security_headers
@@ -28,19 +37,25 @@ www.{$DOMAIN} {
 # as the way back.
 urubunews.{$DOMAIN} {
 	import security_headers
-	reverse_proxy geral:8000
+	reverse_proxy geral:8000 {
+		import hold_during_deploy
+	}
 }
 
 # Oldest address of the Urubu News: same as above (the Geral redirects its home page too).
 flamengo.{$DOMAIN} {
 	import security_headers
-	reverse_proxy geral:8000
+	reverse_proxy geral:8000 {
+		import hold_during_deploy
+	}
 }
 
 # Geral: newsletters per team (stacks/geral). /api/* checks its own token.
 geral.{$DOMAIN} {
 	import security_headers
-	reverse_proxy geral:8000
+	reverse_proxy geral:8000 {
+		import hold_during_deploy
+	}
 }
 
 # today: reminders PWA (stacks/today). Login, session and rate limit live in the app.

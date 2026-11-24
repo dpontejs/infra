@@ -96,10 +96,12 @@
       - lookup('env', 'TODAY_VAPID_PRIVATE_KEY') | length > 0
       - lookup('env', 'TODAY_VAPID_PUBLIC_KEY') | length > 0
       - lookup('env', 'TODAY_VAPID_SUBJECT') is match('^(mailto:|https://)')
+      - lookup('env', 'TODAY_CLAUDE_CODE_OAUTH_TOKEN') is match('^sk-ant-oat')
     fail_msg: >-
       Set TODAY_PASSPHRASE_HASH (an Argon2 hash, see the today repo's .env.example),
       TODAY_SESSION_SECRET and TODAY_API_TOKEN (32+ chars each, e.g. `openssl rand -hex 32`)
-      TODAY_GEMINI_API_KEY and TODAY_VAPID_* (`uv run python -m today.notify keys` in the today repo)
+      TODAY_GEMINI_API_KEY and TODAY_VAPID_* (`uv run python -m today.notify keys` in the today repo),
+      TODAY_CLAUDE_CODE_OAUTH_TOKEN (`claude setup-token`)
       in ~/.config/infra/secrets.env.
     quiet: true
   no_log: true

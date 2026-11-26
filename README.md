@@ -44,7 +44,7 @@ Each item is a vertical slice tracked as a GitHub issue.
 - [x] **Server hardening with Ansible** — SSH keys only, firewall, fail2ban, automatic updates, swap, Docker.
 - [x] **Reverse proxy and first services** — Caddy with automatic HTTPS, portfolio and Uptime Kuma.
 - [x] **CI/CD deploy pipeline** — CI publishes images to GHCR; the VPS pulls and deploys them, with automatic rollback.
-- [ ] **Resource monitoring** — Beszel hub + agent: host and per-container CPU, memory and network with history, e-mail alerts ([page](docs/features/monitoring.md)).
+- [x] **Resource monitoring** — Beszel hub + agent at `monitor.` (admin IPs only): host and per-container CPU, memory and network with history, e-mail alerts; ~0.3 % of a core and ~42 MiB of RAM ([page](docs/features/monitoring.md)).
 - [ ] **Shared database and backups** — Postgres + pgvector, scheduled backups to object storage, tested restore.
 - [ ] **Cloudflare Tunnel to the home GPU** — expose GPU services from the home PC securely.
 

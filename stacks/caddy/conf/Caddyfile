@@ -64,6 +64,12 @@ today.{$DOMAIN} {
 	reverse_proxy today:8000
 }
 
+# Hachibu: training & diet coach PWA (stacks/hachibu). Login, invite code and session live in the app.
+hachibu.{$DOMAIN} {
+	import security_headers
+	reverse_proxy hachibu:8000
+}
+
 # Uptime Kuma: admin panel, only reachable from ADMIN_CIDRS.
 status.{$DOMAIN} {
 	import security_headers

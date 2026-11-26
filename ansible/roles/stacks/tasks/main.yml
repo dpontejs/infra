@@ -118,6 +118,29 @@
   when: "'today' in stacks_enabled"
   notify: Restart today
 
+- name: Require hachibu secrets
+  ansible.builtin.assert:
+    that:
+      - lookup('env', 'HACHIBU_SESSION_SECRET') | length >= 32
+      - lookup('env', 'HACHIBU_INVITE_CODE') | length > 0
+    fail_msg: >-
+      Set HACHIBU_SESSION_SECRET (32+ chars, e.g. `openssl rand -hex 32`) and HACHIBU_INVITE_CODE
+      (any non-empty code) in ~/.config/infra/secrets.env.
+    quiet: true
+  no_log: true
+  when: "'hachibu' in stacks_enabled"
+
+- name: Write hachibu environment
+  ansible.builtin.template:
+    src: hachibu.env.j2
+    dest: "{{ stacks_dir }}/hachibu/.env"
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: "0600"
+  no_log: true
+  when: "'hachibu' in stacks_enabled"
+  notify: Restart hachibu
+
 - name: Start stacks
   community.docker.docker_compose_v2:
     project_src: "{{ stacks_dir }}/{{ item }}"

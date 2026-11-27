@@ -25,7 +25,7 @@ INSPECT = [
 
 METRICS = """# HELP monitor_status Monitor Status (1 = UP, 0= DOWN, 2= PENDING, 3= MAINTENANCE)
 # TYPE monitor_status gauge
-monitor_status{monitor_name="Beszel hub",monitor_type="http",monitor_url="http://beszel:8090/api/health",monitor_hostname="null",monitor_port="null"} 1
+monitor_status{monitor_id="3",monitor_name="Beszel hub",monitor_type="http",monitor_url="http://beszel:8090/api/health",monitor_hostname="null",monitor_port="null"} 1
 monitor_status{monitor_name="containers",monitor_type="push",monitor_url="https://",monitor_hostname="null",monitor_port="null"} 0
 monitor_response_time{monitor_name="Beszel hub",monitor_type="http"} 12
 """

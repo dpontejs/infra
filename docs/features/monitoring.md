@@ -34,8 +34,8 @@ Uptime Kuma only says whether each site answers; sysstat keeps history, but only
 - **DNS:** `monitor` in `var.subdomains` (A + AAAA, DNS only).
 - **Secrets:** `BESZEL_AGENT_KEY` in `~/.config/infra/secrets.env` (the hub's public SSH key,
   shown in *Add System*). Until it is set, Ansible starts only the hub.
-- **Alerts** (Beszel, per system, e-mail through Resend SMTP from `monitor@<domain>`, port **2465**:
-  Hetzner blocks outbound 465 and 25):
+- **Alerts** (Beszel, per system, e-mail through Resend SMTP from and to `monitor@<domain>`, port **2465**:
+  Hetzner blocks outbound 465 and 25; Cloudflare Email Routing forwards `monitor@` to the admin's inbox):
   Disk > 85 %, Memory > 85 % for 5 min, CPU > 90 % for 10 min, ContainerHealth (unhealthy) for 1 min.
 - **Uptime Kuma:** HTTP monitor "Beszel hub" on `http://beszel:8090/api/health` (internal, through
   `web`) and the Push monitor "containers" fed by `container-watch` (#35); both e-mail through the

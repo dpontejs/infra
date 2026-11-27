@@ -1,7 +1,7 @@
 # Status page: health, deploys and versions
 
 - **Date:** 2026-11-27
-- **Status:** in progress (slice 1: health + deploys; slice 2: versions)
+- **Status:** delivered (infra #37; versions: today #20, geral #125, hachibu #12, portfolio #15)
 - **ADRs:** —
 
 ## Goal
@@ -66,6 +66,14 @@ make test && make check && make configure    # main Caddy: graceful reload only
 curl -s https://deploys.diegoponte.dev/state/health.json | jq '.containers | length'   # 11
 docker stop pathoxp-cloudflared-1  # NOT in prod: drill in a local stack → row turns red within 1 min
 ```
+
+## Cost on the VPS (measured 2026-11-27)
+
+- `deploys` container: 11.6 MiB, ~0 % CPU.
+- `container-watch.service` (status-snapshot + push): 545 ms of CPU per minute, ~0.9 % of a core,
+  mostly the four `docker` CLI calls. Merging both into one Python program with a single
+  `docker inspect` would cut it.
+- Each release adds a version-tagged image; old images go with the weekly `docker-prune`.
 
 ## Risks and open questions
 

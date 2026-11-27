@@ -1,3 +1,5 @@
+# RETIRED (retired_stacks in ansible/group_vars/all.yml): not started; kept with its data volume as
+# the way back described in the geral repo's docs/adr/0001.
 services:
   flamengo-news:
     # Subscription page of the Flamengo News newsletter, built and pushed by the flamengo-news

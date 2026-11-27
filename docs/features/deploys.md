@@ -1,7 +1,7 @@
 # Status page: health, deploys and versions
 
 - **Date:** 2026-11-27
-- **Status:** proposed (slice 1: health + deploys; slice 2: versions)
+- **Status:** in progress (slice 1: health + deploys; slice 2: versions)
 - **ADRs:** —
 
 ## Goal
@@ -17,7 +17,7 @@ service healthy, which version runs and did the latest one go live. Beszel stays
 
 ## Contracts
 
-All state lives in `/var/lib/status/` (owner `deploy`, files 0644), mounted read-only in Caddy.
+All state lives in `/var/lib/status/` (owner `deploy`, files 0644), mounted read-only in the `deploys` stack.
 
 **Slice 1: health and deploys**
 - `container-watch` becomes Python (stdlib, like `stack-update`); every minute it still pushes up/down
@@ -34,11 +34,12 @@ All state lives in `/var/lib/status/` (owner `deploy`, files 0644), mounted read
   `version`, `revision`, `source`, `since`) and `history` (last 20, newest first).
   `version`/`revision` come from image labels; until slice 2 they are null.
 - Ansible writes `index.json`: `{"stacks": [<auto_update_stacks>]}`.
-- **Page** `stacks/caddy/deploys/index.html` (static, no build), refreshes every 30 s: host bar
+- **Page** `stacks/deploys/site/index.html` (static, no build), refreshes every 30 s: host bar
   (CPU, memory, disk; amber/red at the alert thresholds 85/90 %), one row per container (health,
   uptime, restarts, deploy state, version or short image id), sites, links to Beszel and Kuma.
-- **Caddy:** `deploys.{$DOMAIN}`, 403 outside `ADMIN_CIDRS`, `file_server`; new read-only bind mount
-  `/var/lib/status:/srv/deploys/state` (Caddy recreated once). **DNS:** `deploys` in `var.subdomains`.
+- **Stack `deploys`:** a minimal `caddy:2.11.7` (port 8080, read-only, 32 MB) serves the page and
+  `/var/lib/status` (read-only) at `/state/`. The main Caddy only gets `deploys.{$DOMAIN}` → `deploys:8080`,
+  403 outside `ADMIN_CIDRS`: a graceful reload, no restart. **DNS:** `deploys` in `var.subdomains`.
 
 **Slice 2: versions** (today, geral, hachibu, portfolio; separate PRs, after the dev's go)
 - `semantic-release` on every merge to `main`, baseline tag `v0.1.0`, breaking → minor while 0.x.
@@ -61,12 +62,11 @@ All state lives in `/var/lib/status/` (owner `deploy`, files 0644), mounted read
 ## End-to-end verification
 
 ```bash
-make test && make check && make configure    # Caddy recreated once (new mount): ~2 s
+make test && make check && make configure    # main Caddy: graceful reload only
 curl -s https://deploys.diegoponte.dev/state/health.json | jq '.containers | length'   # 11
 docker stop pathoxp-cloudflared-1  # NOT in prod: drill in a local stack → row turns red within 1 min
 ```
 
 ## Risks and open questions
 
-- Caddy recreated once (~2 s for every site): needs the dev's OK at deploy time.
 - `/metrics` needs a Kuma API key (created through the Kuma API, stored in `secrets.env`).

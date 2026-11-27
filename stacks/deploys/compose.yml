@@ -1,0 +1,38 @@
+# Status page (deploys.<domain>, docs/features/deploys.md): a minimal Caddy that only serves the page
+# and the JSON files written by stack-update and status-snapshot. Separate from the main Caddy so that
+# adding it needed no restart there, and a problem here never touches the sites. Pinned like caddy.
+services:
+  deploys:
+    image: caddy:2.11.7
+    restart: unless-stopped
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./site:/srv/www:ro
+      # Written every minute by status-snapshot and by stack-update (owner deploy, files 0644).
+      - /var/lib/status:/srv/state:ro
+    # Static files only: port 8080, nothing to write but Caddy's own scratch dirs.
+    read_only: true
+    tmpfs:
+      - /data
+      - /config
+    cap_drop:
+      - ALL
+    # The image's caddy binary carries the cap_net_bind_service file capability: without it in the
+    # bounding set the kernel refuses to exec it ("Operation not permitted"), even on port 8080.
+    cap_add:
+      - NET_BIND_SERVICE
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 32m
+    healthcheck:
+      # busybox wget ships with the caddy image; one request every 2 min costs nothing.
+      test: ["CMD", "wget", "-qO", "/dev/null", "http://127.0.0.1:8080/"]
+      interval: 120s
+      timeout: 5s
+      start_period: 10s
+    networks:
+      - web
+
+networks:
+  web:
+    external: true

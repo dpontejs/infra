@@ -1,80 +1,72 @@
-# Versioned images and a deploys page
+# Status page: health, deploys and versions
 
 - **Date:** 2026-11-27
-- **Status:** proposed
+- **Status:** proposed (slice 1: health + deploys; slice 2: versions)
 - **ADRs:** —
 
 ## Goal
 
-Every app image carries a semantic version and its commit, and `https://deploys.<domain>` (admin IPs
-only) shows, per app: the version running, whether the latest one is live, still deploying or was
-rolled back, and the recent deploys, each linking to the GitHub release with the commits it contains.
+One screen at `https://deploys.<domain>` (admin IPs only) to open first: is the VPS fine, is every
+service healthy, which version runs and did the latest one go live. Beszel stays for details.
 
 ## Out of scope
 
-- E-mail on rollback (next step: push to Uptime Kuma like `container-watch`).
-- pathoxp (GitLab, deployed outside this repo) and edutoria (stopped).
-- Pinning versions in the compose files: the VPS keeps following `:main`.
+- History charts (Beszel) and alert rules (Beszel and Uptime Kuma keep sending them).
+- pathoxp versions (GitLab); its containers do show up under health.
+- E-mail on rollback (later: Kuma push, like `container-watch`).
 
 ## Contracts
 
-**Apps** (today, geral, flamengo-news, hachibu, portfolio), `image` job of `ci.yml`, on `main` only:
-- `semantic-release` (pinned) with `@semantic-release/commit-analyzer`, `release-notes-generator`,
-  `github` and `exec`. `.releaserc.json`: branch `main`, preset `conventionalcommits`,
-  `releaseRules: [{"breaking": true, "release": "minor"}]` (0.x: a breaking change bumps the minor;
-  1.0.0 is a manual `v1.0.0` tag). Tag format `v${version}`. Release notes titled in Portuguese.
-- Baseline: tag `v0.1.0` on the commit running today, pushed once per repo.
-- Order: `semantic-release --dry-run` (exec writes the next version) → build → smoke → push → real
-  release. A broken image never gets a release.
-- Version label: `git describe --tags --match 'v*'` → `0.2.0` on a release commit, `0.2.0+2` two
-  commits after it (`fetch-depth: 0`). Image labels: `org.opencontainers.image.version`,
-  `org.opencontainers.image.revision` (`$GITHUB_SHA`), `org.opencontainers.image.created`.
-- Tags pushed: `:main`, `:sha-<commit>` as today, plus `:<version>` on release commits.
-- `concurrency: release-main` (no cancel) so two merges never compute the same version.
+All state lives in `/var/lib/status/` (owner `deploy`, files 0644), mounted read-only in Caddy.
 
-**Agent** `stack-update` writes `/var/lib/stack-update/<stack>.json` (0644) on every run that pulls:
-```json
-{"stack": "today", "state": "deployed", "checked_at": "2026-11-27T10:00:00-03:00",
- "running": {"image_id": "sha256:…", "version": "0.2.0", "revision": "<sha>", "source": "https://github.com/dpontejs/today", "since": "…"},
- "history": [{"at": "…", "image_id": "sha256:…", "version": "0.2.0", "revision": "<sha>", "result": "deployed"}]}
-```
-- `state`: `deploying` (written before `up --wait`), `deployed`, `rolled_back`, `skipped_bad`,
-  `pull_failed`. `history`: last 20 attempts, newest first. Labels missing → `version: null`.
-- Ansible writes `/var/lib/stack-update/index.json`: `{"stacks": [<auto_update_stacks>]}`.
+**Slice 1: health and deploys**
+- `container-watch` becomes Python (stdlib, like `stack-update`); every minute it still pushes up/down
+  to Kuma, and also writes `health.json`:
+  ```json
+  {"generated_at": "…", "host": {"cpu_pct": 11.2, "load": [0.7, 0.4, 0.5], "mem_pct": 34, "swap_pct": 2, "disk_pct": 72, "uptime_s": 157000},
+   "containers": [{"name": "today-today-1", "state": "running", "health": "healthy", "started_at": "…", "restarts": 0, "image": "ghcr.io/dpontejs/today:main"}],
+   "sites": [{"name": "Beszel hub", "up": true}]}
+  ```
+  `cpu_pct` from `/proc/stat` since the previous run; `sites` from Uptime Kuma `/metrics`
+  (`monitor_status`, read with an API key in `/etc/container-watch.env`); missing → `"sites": null`.
+- `stack-update` writes `<stack>.json` on every run that pulls: `state` (`deploying` before
+  `up --wait`, `deployed`, `rolled_back`, `skipped_bad`, `pull_failed`), `running` (`image_id`,
+  `version`, `revision`, `source`, `since`) and `history` (last 20, newest first).
+  `version`/`revision` come from image labels; until slice 2 they are null.
+- Ansible writes `index.json`: `{"stacks": [<auto_update_stacks>]}`.
+- **Page** `stacks/caddy/deploys/index.html` (static, no build), refreshes every 30 s: host bar
+  (CPU, memory, disk; amber/red at the alert thresholds 85/90 %), one row per container (health,
+  uptime, restarts, deploy state, version or short image id), sites, links to Beszel and Kuma.
+- **Caddy:** `deploys.{$DOMAIN}`, 403 outside `ADMIN_CIDRS`, `file_server`; new read-only bind mount
+  `/var/lib/status:/srv/deploys/state` (Caddy recreated once). **DNS:** `deploys` in `var.subdomains`.
 
-**Page** `stacks/caddy/deploys/index.html` (static HTML + JS, no build): reads `/state/index.json` and
-each `/state/<stack>.json` (every 30 s). Release links need no API: `<source>/releases/tag/v<version>`.
-From the browser, one GitHub API call per app (public repos, 60 req/h per visitor IP):
-`GET /repos/dpontejs/<app>/actions/runs?branch=main&event=push&per_page=1` → CI status (queued /
-in progress / failed) and `head_sha`; `head_sha == running.revision` means the latest is live. Asked
-on load, every 10 min (30 req/h) and from an "atualizar GitHub" button.
-- **Caddy:** `deploys.{$DOMAIN}`, 403 outside `ADMIN_CIDRS`, `file_server` over
-  `/srv/deploys` (page) and `/srv/deploys/state` (`/var/lib/stack-update`, read-only bind mount).
-- **DNS:** `deploys` in `var.subdomains`.
+**Slice 2: versions** (today, geral, hachibu, portfolio; separate PRs, after the dev's go)
+- `semantic-release` on every merge to `main`, baseline tag `v0.1.0`, breaking → minor while 0.x.
+- Dry run → build → smoke → push → release; labels `org.opencontainers.image.version`
+  (`git describe`: `0.2.0` or `0.2.0+2`) and `.revision`; extra tag `:<version>` on releases.
+- The page then links each version to `<source>/releases/tag/v<version>` and asks GitHub (one call per
+  app, on load and every 10 min) for the CI run on `main`: building / failed / `head_sha` live or not.
 
 ## Acceptance criteria (as tests)
 
-- [ ] `test_state_written_on_healthy_deploy`: given a new image with labels, when deployed, then the
-  JSON has `state=deployed`, `running.version` from the label and a `deployed` entry in `history`.
-- [ ] `test_state_deploying_before_wait`: given `up_wait` in progress, then the file says `deploying`.
-- [ ] `test_state_rolled_back`: given an unhealthy image, then `state=rolled_back`, `running` is the
-  previous image and `history[0].result=rolled_back`.
-- [ ] `test_state_without_labels`: given an image without labels, then `version` is null, no crash.
-- [ ] `test_history_keeps_last_20`; `test_no_new_image_only_updates_checked_at`.
-- [ ] `apex_and_subdomains_point_to_the_server` covers `deploys`; `make stacks-test` validates Caddy.
-- [ ] Per app: a merge with `feat:` creates `v0.2.0`, a release listing its commits and image `:0.2.0`
-  with both labels; a `docs:` merge creates no release and deploys `0.2.0+1`.
+- [ ] `test_health_lists_running_stopped_and_missing`: given 3 watched containers (running+healthy,
+  exited, absent), then `health.json` has `running/healthy`, `exited`, `missing`.
+- [ ] `test_cpu_pct_from_previous_sample` and `test_first_run_has_no_cpu_pct` (null).
+- [ ] `test_sites_from_kuma_metrics`; `test_kuma_unreachable_gives_null_sites_and_still_pushes`.
+- [ ] Existing container-watch tests keep passing (push up/down, token out of argv).
+- [ ] `test_state_deployed`, `test_state_deploying_before_wait`, `test_state_rolled_back`,
+  `test_state_without_labels`, `test_history_keeps_last_20`.
+- [ ] `deploys` in the DNS test; `make stacks-test` validates the Caddyfile and compose.
 
 ## End-to-end verification
 
 ```bash
-make test && make check && make configure    # recreates Caddy once (new mount): ~2 s
-# merge a feat: in today → CI green, release v0.2.0 on GitHub, then:
-curl -s https://deploys.diegoponte.dev/state/today.json   # running.version == "0.2.0"
+make test && make check && make configure    # Caddy recreated once (new mount): ~2 s
+curl -s https://deploys.diegoponte.dev/state/health.json | jq '.containers | length'   # 11
+docker stop pathoxp-cloudflared-1  # NOT in prod: drill in a local stack → row turns red within 1 min
 ```
 
 ## Risks and open questions
 
-- Caddy is recreated once to add the bind mount (all sites ~2 s down), needs the dev's OK.
-- Two open tabs share the 60 req/h limit (2 × 30): fine for one admin; a third tab would hit it
-  and the page shows "limite do GitHub" until the hour resets. The state files are unaffected.
+- Caddy recreated once (~2 s for every site): needs the dev's OK at deploy time.
+- `/metrics` needs a Kuma API key (created through the Kuma API, stored in `secrets.env`).

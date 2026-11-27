@@ -49,6 +49,12 @@ variable "domain" {
   default     = "diegoponte.dev"
 }
 
+variable "ipv4_only_subdomains" {
+  description = "Subdomains without an AAAA record. The admin panels: the admin's home IPv6 prefix changes almost daily, the IPv4 doesn't, so ADMIN_CIDRS only has to trust the IPv4."
+  type        = list(string)
+  default     = ["status", "monitor", "deploys"]
+}
+
 variable "subdomains" {
   description = "Subdomains that point to the server, besides the apex (the domain itself)."
   type        = list(string)

@@ -57,9 +57,13 @@ run "apex_and_subdomains_point_to_the_server" {
     error_message = "AAAA records must point to the server IPv6"
   }
 
+  # Every hostname has both records, except the admin panels (IPv4 only, see admin_panels_are_ipv4_only).
   assert {
-    condition     = length(cloudflare_dns_record.ipv6) == length(cloudflare_dns_record.ipv4)
-    error_message = "Every hostname needs both A and AAAA records"
+    condition = toset([for r in cloudflare_dns_record.ipv6 : r.name]) == setsubtract(
+      toset([for r in cloudflare_dns_record.ipv4 : r.name]),
+      toset(["status.diegoponte.dev", "monitor.diegoponte.dev", "deploys.diegoponte.dev"]),
+    )
+    error_message = "Every hostname but the admin panels needs both A and AAAA records"
   }
 
   assert {
@@ -112,5 +116,32 @@ run "domain_publishes_a_dmarc_policy" {
   assert {
     condition     = startswith(trim(cloudflare_dns_record.dmarc.content, "\""), "v=DMARC1; p=none;")
     error_message = "DMARC must start with v=DMARC1 and a monitoring-only policy (p=none)"
+  }
+}
+
+# The admin's home IPv6 prefix changes almost daily while the IPv4 stays: without AAAA records the
+# browser reaches the admin panels over IPv4, the address ADMIN_CIDRS can rely on.
+run "admin_panels_are_ipv4_only" {
+  command = apply
+
+  assert {
+    condition = length(setintersection(
+      toset([for r in cloudflare_dns_record.ipv6 : r.name]),
+      toset(["status.diegoponte.dev", "monitor.diegoponte.dev", "deploys.diegoponte.dev"]),
+    )) == 0
+    error_message = "Admin panels must have no AAAA record"
+  }
+
+  assert {
+    condition = length(setsubtract(
+      toset(["status.diegoponte.dev", "monitor.diegoponte.dev", "deploys.diegoponte.dev"]),
+      toset([for r in cloudflare_dns_record.ipv4 : r.name]),
+    )) == 0
+    error_message = "Admin panels must keep their A record"
+  }
+
+  assert {
+    condition     = contains([for r in cloudflare_dns_record.ipv6 : r.name], "geral.diegoponte.dev")
+    error_message = "Public sites keep their AAAA record"
   }
 }

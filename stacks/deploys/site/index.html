@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Status · diegoponte.dev</title>
+<style>
+  :root { --bg:#f7f7f5; --card:#fff; --fg:#1c1c1a; --muted:#6b6b66; --line:#e4e4df;
+          --ok:#1f7a4d; --okbg:#e3f3ea; --warn:#8a5a00; --warnbg:#fdf0d5; --bad:#b42318; --badbg:#fde4e1; --info:#1d4ed8; --infobg:#e0e9fd; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#141413; --card:#1d1d1b; --fg:#ececea; --muted:#9a9a94; --line:#2e2e2b;
+            --ok:#5fd39a; --okbg:#173326; --warn:#f2c14e; --warnbg:#3a2e12; --bad:#ff8a7a; --badbg:#3d1915; --info:#8fb0ff; --infobg:#1a2647; }
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; font:15px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif; background:var(--bg); color:var(--fg); }
+  main { max-width:1100px; margin:0 auto; padding:24px 16px 48px; }
+  header { display:flex; flex-wrap:wrap; gap:8px 16px; align-items:baseline; justify-content:space-between; margin-bottom:20px; }
+  h1 { font-size:20px; margin:0; } h2 { font-size:13px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin:28px 0 10px; }
+  a { color:inherit; } .muted { color:var(--muted); } .links a { margin-left:12px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:10px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:12px 14px; }
+  .card .k { font-size:12px; color:var(--muted); } .card .v { font-size:22px; font-variant-numeric:tabular-nums; margin-top:2px; }
+  .bar { height:4px; background:var(--line); border-radius:2px; margin-top:8px; overflow:hidden; } .bar i { display:block; height:100%; background:var(--ok); }
+  .warn .bar i { background:var(--warn); } .bad .bar i { background:var(--bad); }
+  .chips { display:flex; flex-wrap:wrap; gap:8px; }
+  .pill { display:inline-flex; align-items:center; gap:6px; padding:2px 9px; border-radius:999px; font-size:13px; white-space:nowrap; }
+  .pill::before { content:""; width:7px; height:7px; border-radius:50%; background:currentColor; }
+  .ok { color:var(--ok); } .pill.ok { background:var(--okbg); } .pill.warn { color:var(--warn); background:var(--warnbg); }
+  .pill.bad { color:var(--bad); background:var(--badbg); } .pill.info { color:var(--info); background:var(--infobg); }
+  .pill.none { color:var(--muted); background:var(--line); }
+  table { width:100%; border-collapse:collapse; background:var(--card); border:1px solid var(--line); border-radius:10px; overflow:hidden; }
+  th, td { text-align:left; padding:9px 12px; border-bottom:1px solid var(--line); vertical-align:top; }
+  th { font-size:12px; font-weight:600; color:var(--muted); } tr:last-child td { border-bottom:0; }
+  td.num { font-variant-numeric:tabular-nums; } code { font:13px ui-monospace,SFMono-Regular,Menlo,monospace; }
+  details summary { cursor:pointer; color:var(--muted); font-size:13px; } details ul { margin:6px 0 0; padding-left:18px; font-size:13px; }
+  .banner { padding:10px 14px; border-radius:10px; margin-bottom:16px; } .banner.bad { background:var(--badbg); color:var(--bad); }
+  @media (max-width:760px) { .hide-sm { display:none; } }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Status · diegoponte.dev</h1>
+    <div><span id="updated" class="muted">carregando…</span>
+      <span class="links"><a id="beszel" href="#">Beszel</a><a id="kuma" href="#">Uptime Kuma</a></span></div>
+  </header>
+  <div id="banner"></div>
+
+  <h2>Máquina</h2>
+  <div class="grid" id="host"></div>
+
+  <h2>Sites (Uptime Kuma)</h2>
+  <div class="chips" id="sites"></div>
+
+  <h2>Serviços</h2>
+  <table>
+    <thead><tr><th>Serviço</th><th>Saúde</th><th>Versão</th><th>Deploy</th><th class="hide-sm">No ar há</th><th class="hide-sm">Reinícios</th></tr></thead>
+    <tbody id="services"></tbody>
+  </table>
+  <p class="muted" style="font-size:13px">Atualiza a cada 30 s. Status do CI no GitHub: ao abrir e a cada 10 min
+    (<a href="#" id="gh-refresh">atualizar agora</a>). Detalhes e histórico de uso: Beszel.</p>
+</main>
+<script>
+"use strict";
+const STATE = "/state/";
+const LIMITS = { cpu: [85, 90], mem: [85, 90], swap: [50, 80], disk: [85, 90] };
+let ci = {};            // stack -> latest CI run on main (GitHub)
+let ciError = null;
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const pill = (cls, text, title = "") => `<span class="pill ${cls}" title="${esc(title)}">${esc(text)}</span>`;
+
+function ago(iso) {
+  if (!iso) return "—";
+  const s = Math.max(0, (Date.now() - new Date(iso).getTime()) / 1000);
+  if (s < 90) return `${Math.round(s)} s`;
+  if (s < 5400) return `${Math.round(s / 60)} min`;
+  if (s < 172800) return `${Math.round(s / 3600)} h`;
+  return `${Math.round(s / 86400)} d`;
+}
+
+async function getJSON(path) {
+  try { const r = await fetch(path, { cache: "no-store" }); return r.ok ? await r.json() : null; }
+  catch { return null; }
+}
+
+function level(value, [warn, bad]) { return value == null ? "" : value >= bad ? "bad" : value >= warn ? "warn" : ""; }
+
+function card(label, value, unit, limits) {
+  const cls = limits ? level(value, limits) : "";
+  const bar = limits && value != null ? `<div class="bar"><i style="width:${Math.min(100, value)}%"></i></div>` : "";
+  return `<div class="card ${cls}"><div class="k">${label}</div><div class="v">${value == null ? "—" : esc(value) + unit}</div>${bar}</div>`;
+}
+
+function renderHost(h) {
+  if (!h) { $("host").innerHTML = card("Máquina", null, ""); return; }
+  $("host").innerHTML = [
+    card("CPU", h.cpu_pct, "%", LIMITS.cpu), card("Memória", h.mem_pct, "%", LIMITS.mem),
+    card("Disco", h.disk_pct, "%", LIMITS.disk), card("Swap", h.swap_pct, "%", LIMITS.swap),
+    card("Load (1/5/15 min)", h.load ? h.load.join(" · ") : null, ""), card("No ar há", h.uptime_s == null ? null : ago(new Date(Date.now() - h.uptime_s * 1000)), ""),
+  ].join("");
+}
+
+function renderSites(sites) {
+  if (sites == null) { $("sites").innerHTML = `<span class="muted">sem dados do Uptime Kuma</span>`; return; }
+  const label = { 0: "fora", 1: "no ar", 2: "pendente", 3: "manutenção" };
+  $("sites").innerHTML = sites.map((s) => pill(s.up ? "ok" : s.status === 3 ? "info" : s.status === 2 ? "warn" : "bad", s.name, label[s.status])).join("") || `<span class="muted">nenhum monitor</span>`;
+}
+
+function health(c) {
+  if (c.state === "missing") return pill("bad", "não existe");
+  if (c.state !== "running") return pill("bad", c.state);
+  if (c.health === "healthy") return pill("ok", "saudável");
+  if (c.health === "unhealthy") return pill("bad", "unhealthy");
+  if (c.health === "starting") return pill("warn", "iniciando");
+  return pill("none", "rodando", "sem healthcheck");
+}
+
+function repoOf(st, c) {
+  const src = st?.running?.source;
+  if (src && src.startsWith("https://github.com/")) return src.replace(/\/$/, "");
+  const m = /^ghcr\.io\/([^/]+)\/([^:@]+)/.exec(c.image || "");
+  return m ? `https://github.com/${m[1]}/${m[2]}` : null;
+}
+
+function version(st, repo) {
+  const r = st?.running;
+  if (!r) return `<span class="muted">—</span>`;
+  if (r.version) {
+    const base = r.version.split("+")[0];
+    const exact = !r.version.includes("+");
+    const href = exact ? `${repo}/releases/tag/v${base}` : `${repo}/commit/${r.revision}`;
+    return `<a href="${esc(href)}"><code>v${esc(r.version)}</code></a>`;
+  }
+  return `<code class="muted" title="imagem sem versão (labels)">${esc((r.image_id || "").replace("sha256:", "").slice(0, 12))}</code>`;
+}
+
+function deploy(stack, st) {
+  if (!stack) return `<span class="muted">—</span>`;
+  if (!st) return pill("none", "sem dados");
+  const run = ci[stack];
+  const parts = [];
+  switch (st.state) {
+    case "deploying": parts.push(pill("info", "entrando", `desde ${st.checked_at}`)); break;
+    case "rolled_back": parts.push(pill("bad", "rollback", "a versão nova não ficou saudável; a anterior voltou")); break;
+    case "skipped_bad": parts.push(pill("warn", "versão recusada", "a imagem mais nova já falhou antes e é ignorada")); break;
+    case "pull_failed": parts.push(pill("warn", "pull falhou")); break;
+    case "failed": parts.push(pill("bad", "falhou")); break;
+    default: {
+      const rev = st.running?.revision;
+      if (run && run.status !== "completed") parts.push(pill("info", "CI rodando"));
+      else if (run && run.conclusion !== "success") parts.push(pill("bad", "CI falhou"));
+      else if (run && rev && run.head_sha !== rev) parts.push(pill("warn", "aguardando deploy"));
+      else parts.push(pill("ok", "em dia"));
+    }
+  }
+  if (run) parts.push(`<a class="muted" style="font-size:13px" href="${esc(run.html_url)}">CI</a>`);
+  const hist = (st.history || []).slice(0, 8).map((h) =>
+    `<li>${esc(ago(h.at))} atrás · ${esc(h.result)} · <code>${esc(h.version ? "v" + h.version : (h.image_id || "").replace("sha256:", "").slice(0, 12))}</code></li>`).join("");
+  const since = st.running?.since ? `<div class="muted" style="font-size:13px">deploy há ${esc(ago(st.running.since))}</div>` : "";
+  return parts.join(" ") + since + (hist ? `<details><summary>últimos deploys</summary><ul>${hist}</ul></details>` : "");
+}
+
+async function refreshCI(stacks, states) {
+  ciError = null;
+  await Promise.all(stacks.map(async (stack) => {
+    const repo = repoOf(states[stack], { image: `ghcr.io/dpontejs/${stack}` });
+    if (!repo) return;
+    const api = repo.replace("https://github.com/", "https://api.github.com/repos/");
+    try {
+      const r = await fetch(`${api}/actions/workflows/ci.yml/runs?branch=main&event=push&per_page=1`);
+      if (r.status === 403 || r.status === 429) { ciError = "limite do GitHub atingido; tenta de novo em alguns minutos"; return; }
+      const run = (await r.json()).workflow_runs?.[0];
+      if (run) ci[stack] = run;
+    } catch { ciError = "GitHub indisponível"; }
+  }));
+}
+
+let lastStacks = [], lastStates = {};
+async function render() {
+  const [index, h] = await Promise.all([getJSON(STATE + "index.json"), getJSON(STATE + "health.json")]);
+  const stacks = index?.stacks || [];
+  const states = Object.fromEntries(await Promise.all(stacks.map(async (s) => [s, await getJSON(`${STATE}${s}.json`)])));
+  lastStacks = stacks; lastStates = states;
+  if (index?.links) { $("beszel").href = index.links.beszel; $("kuma").href = index.links.kuma; }
+
+  const stale = !h || (Date.now() - new Date(h.generated_at).getTime()) > 180000;
+  $("banner").innerHTML = !h ? `<div class="banner bad">Sem dados de saúde: o status-snapshot não está rodando?</div>`
+    : stale ? `<div class="banner bad">Dados de saúde parados há ${esc(ago(h.generated_at))}: o timer container-watch está rodando?</div>`
+    : ciError ? `<div class="banner bad">${esc(ciError)}</div>` : "";
+  $("updated").textContent = h ? `atualizado há ${ago(h.generated_at)}` : "sem dados";
+
+  renderHost(h?.host);
+  renderSites(h?.sites);
+  $("services").innerHTML = (h?.containers || []).map((c) => {
+    const stack = stacks.find((s) => c.name === `${s}-${s}-1`);
+    const st = stack ? states[stack] : null;
+    const repo = repoOf(st, c);
+    const name = repo && stack ? `<a href="${esc(repo)}">${esc(c.name)}</a>` : esc(c.name);
+    return `<tr><td>${name}</td><td>${health(c)}</td><td>${stack ? version(st, repo) : `<code class="muted">${esc(c.image || "")}</code>`}</td>
+      <td>${deploy(stack, st)}</td><td class="num hide-sm">${c.state === "running" ? esc(ago(c.started_at)) : "—"}</td>
+      <td class="num hide-sm">${c.restarts ?? "—"}</td></tr>`;
+  }).join("");
+}
+
+async function refreshAll() { await render(); await refreshCI(lastStacks, lastStates); await render(); }
+$("gh-refresh").addEventListener("click", (e) => { e.preventDefault(); refreshAll(); });
+refreshAll();
+setInterval(render, 30000);
+setInterval(() => refreshCI(lastStacks, lastStates).then(render), 600000);
+</script>
+</body>
+</html>

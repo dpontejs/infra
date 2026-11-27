@@ -17,7 +17,7 @@ stacks_dir: /opt/stacks
 docker_web_subnet_ipv4: 172.18.0.0/16
 docker_web_subnet_ipv6: fd4d:6f6e:6974::/64
 # Started in this order; caddy first so the others are reachable as soon as they start.
-stacks_enabled: [caddy, uptime-kuma, portfolio, today, geral, hachibu, beszel]
+stacks_enabled: [caddy, uptime-kuma, portfolio, today, geral, hachibu, beszel, deploys]
 # Stacks deployed automatically when a new image is pushed (docs/features/auto-deploy.md).
 auto_update_stacks: [portfolio, today, geral, hachibu]
 # Stacks taken down: their auto-deploy timer is disabled and their containers removed; volumes (data)
@@ -55,5 +55,9 @@ watched_containers:
   - beszel-beszel-1
   - beszel-beszel-agent-1
   - beszel-docker-proxy-1
+  - deploys-deploys-1
   - pathoxp-mcp-1
   - pathoxp-cloudflared-1
+# Status page (docs/features/deploys.md): stack-update and status-snapshot write JSON here; the deploys
+# stack serves it read-only.
+status_dir: /var/lib/status

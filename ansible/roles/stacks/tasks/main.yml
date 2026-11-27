@@ -152,6 +152,22 @@
   when: "'beszel' in stacks_enabled"
   notify: Restart beszel
 
+- name: Create the status directory (read by the deploys page)
+  ansible.builtin.file:
+    path: "{{ status_dir }}"
+    state: directory
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: "0755"
+
+- name: Write the list of stacks and links shown by the deploys page
+  ansible.builtin.copy:
+    content: "{{ {'stacks': auto_update_stacks, 'links': {'beszel': 'https://monitor.' ~ domain, 'kuma': 'https://status.' ~ domain}} | to_nice_json }}\n"
+    dest: "{{ status_dir }}/index.json"
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: "0644"
+
 # Timer first: with the container gone, a still-active stack-update would see "nothing running" and
 # deploy it again as a first deploy.
 - name: Stop the auto-deploy of retired stacks

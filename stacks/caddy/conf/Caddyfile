@@ -89,6 +89,15 @@ monitor.{$DOMAIN} {
 	reverse_proxy beszel:8090
 }
 
+# Status page: health, deploys and versions (stacks/deploys), only reachable from ADMIN_CIDRS.
+deploys.{$DOMAIN} {
+	import security_headers
+	log
+	@outsiders not remote_ip {$ADMIN_CIDRS}
+	respond @outsiders "Forbidden" 403
+	reverse_proxy deploys:8080
+}
+
 # EdutorIA: internal demo of a separate project (github.com/dpontejs/edutor-ia), deployed from its own
 # compose files in /opt/stacks/edutoria. Its own Caddy routes the SPA, the API, auth and signed S3 URLs
 # over plain HTTP inside the `web` network; TLS ends here. 16 MB covers its largest upload (a PDF).

@@ -61,6 +61,8 @@ stacks-test:
 	@docker run --rm -e DOMAIN=example.com -e ADMIN_CIDRS="203.0.113.10/32 2001:db8::/64" \
 		-v "$(CURDIR)/stacks/caddy/conf:/etc/caddy:ro" $(CADDY_IMAGE) \
 		caddy validate --config /etc/caddy/Caddyfile 2>&1 | tail -1
+	@docker run --rm -v "$(CURDIR)/stacks/deploys/Caddyfile:/etc/caddy/Caddyfile:ro" $(CADDY_IMAGE) \
+		caddy validate --config /etc/caddy/Caddyfile 2>&1 | tail -1
 	@echo "stacks ok"
 
 # Deploy agent against a real Docker daemon and a local registry (~1 min).

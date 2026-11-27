@@ -18,6 +18,14 @@
     group: root
     mode: "0755"
 
+- name: Install status-snapshot (health.json for the deploys page)
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../agent/status_snapshot.py"
+    dest: /usr/local/bin/status-snapshot
+    owner: root
+    group: root
+    mode: "0755"
+
 - name: Write container-watch's environment (read by systemd only)
   ansible.builtin.template:
     src: container-watch.env.j2

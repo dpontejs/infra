@@ -1,0 +1,47 @@
+---
+# Beszel does not alert on stopped containers (henrygd/beszel#1786): every minute this timer checks
+# the expected containers and pushes up/down to an Uptime Kuma Push monitor (docs/features/monitoring.md).
+- name: Require the Uptime Kuma push token
+  ansible.builtin.assert:
+    that: lookup('env', 'UPTIME_KUMA_CONTAINERS_PUSH_TOKEN') | length > 0
+    fail_msg: >-
+      Set UPTIME_KUMA_CONTAINERS_PUSH_TOKEN in ~/.config/infra/secrets.env: the token of the
+      "containers" Push monitor in Uptime Kuma (the last part of its push URL).
+    quiet: true
+  no_log: true
+
+- name: Install container-watch
+  ansible.builtin.copy:
+    src: container-watch
+    dest: /usr/local/bin/container-watch
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Write container-watch's environment (read by systemd only)
+  ansible.builtin.template:
+    src: container-watch.env.j2
+    dest: /etc/container-watch.env
+    owner: root
+    group: root
+    mode: "0600"
+  no_log: true
+
+- name: Install container-watch's systemd units
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "/etc/systemd/system/{{ item }}"
+    owner: root
+    group: root
+    mode: "0644"
+  loop: [container-watch.service, container-watch.timer]
+  notify: Reload systemd for container-watch
+
+- name: Apply unit changes before enabling the timer
+  ansible.builtin.meta: flush_handlers
+
+- name: Enable the container-watch timer
+  ansible.builtin.systemd_service:
+    name: container-watch.timer
+    state: started
+    enabled: true

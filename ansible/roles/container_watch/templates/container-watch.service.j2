@@ -1,0 +1,14 @@
+# {{ ansible_managed }}
+[Unit]
+Description=Push to Uptime Kuma whether every expected container is running
+After=docker.service
+
+[Service]
+Type=oneshot
+# deploy is in the docker group: it only runs `docker inspect`.
+User={{ deploy_user }}
+EnvironmentFile=/etc/container-watch.env
+ExecStart=/usr/local/bin/container-watch
+ProtectSystem=full
+PrivateTmp=yes
+NoNewPrivileges=yes

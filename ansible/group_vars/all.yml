@@ -39,3 +39,18 @@ geral_sender: "Geral <geral@{{ domain }}>"
 geral_trigger_repo: dpontejs/geral
 geral_trigger_schedule: "*:0/10"
 newsletter_trigger_schedule: "*:0/10"
+# Containers that must always be running: container-watch pushes "down" to Uptime Kuma when one is
+# not (docs/features/monitoring.md). pathoxp lives in /opt/pathoxp, outside this repo; edutoria is stopped.
+watched_containers:
+  - caddy-caddy-1
+  - uptime-kuma-uptime-kuma-1
+  - portfolio-portfolio-1
+  - flamengo-news-flamengo-news-1
+  - today-today-1
+  - geral-geral-1
+  - hachibu-hachibu-1
+  - beszel-beszel-1
+  - beszel-beszel-agent-1
+  - beszel-docker-proxy-1
+  - pathoxp-mcp-1
+  - pathoxp-cloudflared-1

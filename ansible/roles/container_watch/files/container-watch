@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+# Every minute: checks that every expected container is running and pushes the result to an Uptime
+# Kuma "Push" monitor (docs/features/monitoring.md). Beszel only alerts on running containers that turn
+# unhealthy (henrygd/beszel#1786); a stopped container is the case this covers. If this timer stops,
+# the pushes stop and Kuma marks the monitor down as well.
+# Kuma is reached by its IP on the "web" network: through the public domain, Caddy would answer 403
+# (the VPS's own IP is not in ADMIN_CIDRS). The push token goes to curl through stdin, never in argv.
+set -euo pipefail
+
+: "${WATCHED_CONTAINERS:?space-separated container names}"
+: "${KUMA_CONTAINER:?Uptime Kuma container name}"
+: "${PUSH_TOKEN:?Uptime Kuma push token}"
+
+read -r -a watched <<<"$WATCHED_CONTAINERS"
+
+# One line per container found: "<name> <running>". Exits 1 when a name does not exist; those are
+# caught below as not running.
+states=$(docker inspect -f '{{.Name}} {{.State.Running}}' "${watched[@]}" 2>/dev/null || true)
+
+down=()
+for name in "${watched[@]}"; do
+  if ! grep -qxE "/?${name} true" <<<"$states"; then
+    down+=("$name")
+  fi
+done
+
+if ((${#down[@]} == 0)); then
+  query="status=up&msg=OK"
+else
+  query="status=down&msg=$(printf 'stopped: %s' "${down[*]}" | sed 's/ /%20/g')"
+  echo "not running: ${down[*]}" >&2
+fi
+
+kuma_ip=$(docker inspect -f '{{(index .NetworkSettings.Networks "web").IPAddress}}' "$KUMA_CONTAINER")
+
+curl --config - --fail --silent --show-error --max-time 10 --get --data "$query" <<CONFIG
+url = "http://${kuma_ip}:3001/api/push/${PUSH_TOKEN}"
+CONFIG

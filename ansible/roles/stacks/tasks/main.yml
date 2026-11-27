@@ -152,6 +152,22 @@
   when: "'beszel' in stacks_enabled"
   notify: Restart beszel
 
+# Timer first: with the container gone, a still-active stack-update would see "nothing running" and
+# deploy it again as a first deploy.
+- name: Stop the auto-deploy of retired stacks
+  ansible.builtin.systemd_service:
+    name: "stack-update@{{ item }}.timer"
+    state: stopped
+    enabled: false
+  loop: "{{ retired_stacks | default([]) }}"
+
+- name: Remove retired stacks (containers and networks; volumes are kept)
+  community.docker.docker_compose_v2:
+    project_src: "{{ stacks_dir }}/{{ item }}"
+    state: absent
+    remove_volumes: false
+  loop: "{{ retired_stacks | default([]) }}"
+
 - name: Start stacks
   community.docker.docker_compose_v2:
     project_src: "{{ stacks_dir }}/{{ item }}"

@@ -17,9 +17,13 @@ stacks_dir: /opt/stacks
 docker_web_subnet_ipv4: 172.18.0.0/16
 docker_web_subnet_ipv6: fd4d:6f6e:6974::/64
 # Started in this order; caddy first so the others are reachable as soon as they start.
-stacks_enabled: [caddy, uptime-kuma, portfolio, flamengo-news, today, geral, hachibu, beszel]
+stacks_enabled: [caddy, uptime-kuma, portfolio, today, geral, hachibu, beszel]
 # Stacks deployed automatically when a new image is pushed (docs/features/auto-deploy.md).
-auto_update_stacks: [portfolio, flamengo-news, today, geral, hachibu]
+auto_update_stacks: [portfolio, today, geral, hachibu]
+# Stacks taken down: their auto-deploy timer is disabled and their containers removed; volumes (data)
+# are kept. flamengo-news: the Urubu News lives in the Geral since geral docs/adr/0001, whose way back
+# exports from the Geral's database, not from this container.
+retired_stacks: [flamengo-news]
 # admin_cidrs comes from Terraform (terraform.tfvars) through the generated inventory.
 # Urubu News (Flamengo newsletter) sign-up page. Secrets come from the admin machine's environment
 # (~/.config/infra/secrets.env, sourced by `make configure`), never from the repo.
@@ -45,7 +49,6 @@ watched_containers:
   - caddy-caddy-1
   - uptime-kuma-uptime-kuma-1
   - portfolio-portfolio-1
-  - flamengo-news-flamengo-news-1
   - today-today-1
   - geral-geral-1
   - hachibu-hachibu-1

@@ -33,8 +33,8 @@ www.{$DOMAIN} {
 
 # Urubu News: moved into the Geral (geral repo, docs/adr/0001). E-mails already sent link here
 # (unsubscribe, one-click POST from Gmail, bets, ranking, logo): the Geral answers them with the old
-# signing secret; its home page redirects to the Geral portal. stacks/flamengo-news stays up, unrouted,
-# as the way back.
+# signing secret; its home page redirects to the Geral portal. stacks/flamengo-news is retired
+# (retired_stacks in group_vars); its compose file and data volume stay as the way back.
 urubunews.{$DOMAIN} {
 	import security_headers
 	reverse_proxy geral:8000 {

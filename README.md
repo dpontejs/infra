@@ -33,7 +33,7 @@ stack behind **Caddy** (automatic HTTPS), deployed by **GitHub Actions**, with b
   │   ├─ status.diegoponte.dev   → Uptime Kuma
   │   └─ monitor.diegoponte.dev  → Beszel (CPU, memory, disk, containers)
   ├─ Postgres + pgvector (shared)
-  └─ scheduled jobs (flamengo-news, geral)
+  └─ scheduled jobs (geral)
 ```
 
 ## Roadmap
@@ -68,14 +68,9 @@ Requirements: Terraform ≥ 1.9, Ansible (`ansible-core` + `ansible-lint`), a He
 #   CLOUDFLARE_API_TOKEN: Zone:Read + DNS:Edit on the domain's zone only
 echo 'export HCLOUD_TOKEN=...' > ~/.config/infra/secrets.env
 echo 'export CLOUDFLARE_API_TOKEN=...' >> ~/.config/infra/secrets.env
-#   Flamengo News sign-up page (stacks/flamengo-news)
-echo "export FLAMENGO_NEWS_SUBSCRIBE_SECRET=$(openssl rand -hex 32)" >> ~/.config/infra/secrets.env
-echo "export FLAMENGO_NEWS_API_TOKEN=$(openssl rand -hex 32)" >> ~/.config/infra/secrets.env
+#   Resend API key: sends the Geral's e-mails and the monitoring alerts (name kept from the Urubu News)
 echo 'export FLAMENGO_NEWS_RESEND_API_KEY=...' >> ~/.config/infra/secrets.env
-#   Optional: e-mail notified whenever someone confirms a subscription
-echo 'export FLAMENGO_NEWS_NOTIFY_EMAIL=voce@exemplo.com' >> ~/.config/infra/secrets.env
-#   Newsletter trigger: fine-grained token, repo dpontejs/flamengo-news only, Actions: Read and write
-echo 'export FLAMENGO_NEWS_GITHUB_TOKEN=...' >> ~/.config/infra/secrets.env
+#   The other FLAMENGO_NEWS_* values are only needed if stacks/flamengo-news (retired) comes back.
 
 cp terraform/example.tfvars terraform/terraform.tfvars   # set admin_cidrs to your IP
 make init

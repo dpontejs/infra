@@ -141,9 +141,29 @@
   when: "'hachibu' in stacks_enabled"
   notify: Restart hachibu
 
+- name: Write beszel environment
+  ansible.builtin.template:
+    src: beszel.env.j2
+    dest: "{{ stacks_dir }}/beszel/.env"
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: "0600"
+  when: "'beszel' in stacks_enabled"
+  notify: Restart beszel
+
 - name: Start stacks
   community.docker.docker_compose_v2:
     project_src: "{{ stacks_dir }}/{{ item }}"
     state: present
     pull: missing
-  loop: "{{ stacks_enabled }}"
+  loop: "{{ stacks_enabled | difference(['beszel']) }}"
+
+# The agent needs the hub's public key, which the hub only generates on its first start: until
+# BESZEL_AGENT_KEY is set, only the hub runs (docs/features/monitoring.md, first install).
+- name: Start beszel
+  community.docker.docker_compose_v2:
+    project_src: "{{ stacks_dir }}/beszel"
+    state: present
+    pull: missing
+    services: "{{ omit if lookup('env', 'BESZEL_AGENT_KEY') | length > 0 else ['beszel'] }}"
+  when: "'beszel' in stacks_enabled"

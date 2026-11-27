@@ -30,7 +30,8 @@ stack behind **Caddy** (automatic HTTPS), deployed by **GitHub Actions**, with b
   │   ├─ today.diegoponte.dev     → today (reminders PWA)
   │   ├─ geral.diegoponte.dev     → Geral (newsletters per team)
   │   ├─ hachibu.diegoponte.dev   → Hachibu (training & diet coach PWA)
-  │   └─ status.diegoponte.dev   → Uptime Kuma
+  │   ├─ status.diegoponte.dev   → Uptime Kuma
+  │   └─ monitor.diegoponte.dev  → Beszel (CPU, memory, disk, containers)
   ├─ Postgres + pgvector (shared)
   └─ scheduled jobs (flamengo-news, geral)
 ```
@@ -43,6 +44,7 @@ Each item is a vertical slice tracked as a GitHub issue.
 - [x] **Server hardening with Ansible** — SSH keys only, firewall, fail2ban, automatic updates, swap, Docker.
 - [x] **Reverse proxy and first services** — Caddy with automatic HTTPS, portfolio and Uptime Kuma.
 - [x] **CI/CD deploy pipeline** — CI publishes images to GHCR; the VPS pulls and deploys them, with automatic rollback.
+- [x] **Resource monitoring** — Beszel hub + agent at `monitor.` (admin IPs only): host and per-container CPU, memory and network with history, e-mail alerts; ~0.3 % of a core and ~42 MiB of RAM ([page](docs/features/monitoring.md)).
 - [ ] **Shared database and backups** — Postgres + pgvector, scheduled backups to object storage, tested restore.
 - [ ] **Cloudflare Tunnel to the home GPU** — expose GPU services from the home PC securely.
 

@@ -36,3 +36,10 @@
     project_src: "{{ stacks_dir }}/hachibu"
     state: present
     recreate: always
+
+- name: Restart beszel
+  community.docker.docker_compose_v2:
+    project_src: "{{ stacks_dir }}/beszel"
+    state: present
+    recreate: always
+    services: "{{ omit if lookup('env', 'BESZEL_AGENT_KEY') | length > 0 else ['beszel'] }}"

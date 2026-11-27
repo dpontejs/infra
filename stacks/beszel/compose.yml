@@ -1,0 +1,77 @@
+# Beszel: resource monitoring for the VPS and every container (docs/features/monitoring.md).
+# Versions are pinned on purpose: this stack is not in auto_update_stacks.
+services:
+  # Hub: web UI, history (SQLite in beszel_data) and alerts. Only reachable through Caddy
+  # (monitor.<domain>, ADMIN_CIDRS only); no published port.
+  beszel:
+    image: henrygd/beszel:0.21.2
+    restart: unless-stopped
+    environment:
+      APP_URL: https://monitor.${DOMAIN:?set DOMAIN in .env}
+    volumes:
+      - beszel_data:/beszel_data
+      # The hub reaches the agent through this unix socket, so the agent opens no TCP port.
+      - beszel_socket:/beszel_socket
+    mem_limit: 192m
+    healthcheck:
+      # Native Go binary (cheap); the docs recommend 60 s or more.
+      test: ["CMD", "/beszel", "health", "--url", "http://localhost:8090"]
+      interval: 120s
+      timeout: 5s
+      start_period: 10s
+    networks:
+      - web
+
+  # Agent: reads host stats (/proc, network interfaces: hence the host network) and container stats
+  # from the Docker API, through the read-only proxy below instead of the raw socket.
+  beszel-agent:
+    image: henrygd/beszel-agent:0.21.2
+    restart: unless-stopped
+    network_mode: host
+    # KEY: the hub's public SSH key (Add System dialog), written by Ansible.
+    # Optional only so `make stacks-test` validates offline; Ansible starts the agent only once it is set.
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      LISTEN: /beszel_socket/beszel.sock
+      DOCKER_HOST: tcp://127.0.0.1:2375
+      # Images follow :main tags or are pinned here; update checks would only add registry calls.
+      DOCKER_IMAGE_CHECK: "false"
+    volumes:
+      - beszel_agent_data:/var/lib/beszel-agent
+      - beszel_socket:/beszel_socket
+    mem_limit: 64m
+    healthcheck:
+      test: ["CMD", "/agent", "health"]
+      interval: 120s
+      timeout: 5s
+      start_period: 10s
+    depends_on:
+      - docker-proxy
+
+  # A docker.sock mounted ":ro" still allows every API call (":ro" only protects the socket file).
+  # This proxy allows GET/HEAD on containers, info and version only: no POST, no exec, no images.
+  docker-proxy:
+    image: tecnativa/docker-socket-proxy:v0.5.0
+    restart: unless-stopped
+    environment:
+      CONTAINERS: 1
+      INFO: 1
+      POST: 0
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    # Loopback only: the agent runs on the host network; nothing outside the VPS can reach it.
+    ports:
+      - "127.0.0.1:2375:2375"
+    # haproxy preallocates: ~25 MB measured idle.
+    mem_limit: 48m
+
+volumes:
+  beszel_data:
+  beszel_socket:
+  beszel_agent_data:
+
+networks:
+  web:
+    external: true

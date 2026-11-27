@@ -123,9 +123,10 @@
     that:
       - lookup('env', 'HACHIBU_SESSION_SECRET') | length >= 32
       - lookup('env', 'HACHIBU_INVITE_CODE') | length > 0
+      - lookup('env', 'HACHIBU_GEMINI_API_KEY') | length > 0
     fail_msg: >-
-      Set HACHIBU_SESSION_SECRET (32+ chars, e.g. `openssl rand -hex 32`) and HACHIBU_INVITE_CODE
-      (any non-empty code) in ~/.config/infra/secrets.env.
+      Set HACHIBU_SESSION_SECRET (32+ chars, e.g. `openssl rand -hex 32`), HACHIBU_INVITE_CODE
+      (any non-empty code) and HACHIBU_GEMINI_API_KEY (the coach's Gemini key) in ~/.config/infra/secrets.env.
     quiet: true
   no_log: true
   when: "'hachibu' in stacks_enabled"

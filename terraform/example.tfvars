@@ -5,3 +5,4 @@ admin_cidrs = ["203.0.113.10/32"] # your public IP: curl -s https://ifconfig.me
 # location            = "nbg1"
 # domain              = "diegoponte.dev"
 # subdomains          = ["www", "status", "rag", "mlflow", "flamengo", "urubunews", "edutoria", "today", "geral", "hachibu", "monitor", "deploys"]
+# ipv4_only_subdomains = ["status", "monitor", "deploys"]   # admin panels: no AAAA record

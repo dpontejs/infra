@@ -7,6 +7,8 @@ data "cloudflare_zone" "main" {
 locals {
   # "@" is the usual shorthand for the apex: the bare domain, without subdomain.
   hostnames = toset(concat(["@"], var.subdomains))
+  # Admin panels get no AAAA record (see var.ipv4_only_subdomains).
+  ipv6_hostnames = setsubtract(local.hostnames, var.ipv4_only_subdomains)
 }
 
 # DNS only (proxied = false): visitors reach the server directly, so Caddy can obtain
@@ -24,7 +26,7 @@ resource "cloudflare_dns_record" "ipv4" {
 }
 
 resource "cloudflare_dns_record" "ipv6" {
-  for_each = local.hostnames
+  for_each = local.ipv6_hostnames
 
   zone_id = data.cloudflare_zone.main.id
   name    = each.key == "@" ? var.domain : "${each.key}.${var.domain}"
